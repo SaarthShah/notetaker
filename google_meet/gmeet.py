@@ -114,11 +114,11 @@ async def join_meet(meet_link, end_time=30):
     )
 
     try:
+        sleep(2)
         driver.find_element(
             By.XPATH,
             "/html/body/div/div[3]/div[2]/div/div/div/div/div[2]/div/div[1]/button",
         ).click()
-        sleep(2)
     except NoSuchElementException:
         print("No popup")
 
@@ -128,13 +128,13 @@ async def join_meet(meet_link, end_time=30):
 
     try:
         print("Try to dismiss missing mic")
-        driver.find_element(By.CLASS_NAME, "VfPpkd-vQzf8d").find_element(By.XPATH, "..")
         sleep(2)
-        with open("screenshots/webpage.html", "w") as f:
-            f.write(driver.page_source)
-        missing_mic = True
+        mic_element = driver.find_element(By.CLASS_NAME, "VfPpkd-vQzf8d")
+        if mic_element:
+            print('mic is missing')
+            missing_mic = True
     except NoSuchElementException:
-        pass
+        print("No missing mic element found")
 
     try:
         print("Allow Microphone")
@@ -150,7 +150,7 @@ async def join_meet(meet_link, end_time=30):
         print("Try to disable microphone")
         driver.find_element(
             By.XPATH,
-            '//*[@id="yDmH0d"]/c-wiz/div/div/div[14]/div[3]/div/div[2]/div[4]/div/div/div[1]/div[1]/div/div[6]/div[1]/div/div',
+            '//*[@id="yDmH0d"]/c-wiz/div/div/div[35]/div[3]/div/div[2]/div[4]/div/div/div[1]/div[1]/div/div[7]/div[1]/div/div/div[1]',
         ).click()
     except NoSuchElementException:
         print("No microphone to disable")
@@ -161,7 +161,7 @@ async def join_meet(meet_link, end_time=30):
     if not missing_mic:
         driver.find_element(
             By.XPATH,
-            '//*[@id="yDmH0d"]/c-wiz/div/div/div[14]/div[3]/div/div[2]/div[4]/div/div/div[1]/div[1]/div/div[6]/div[2]/div',
+            '//*[@id="yDmH0d"]/c-wiz/div/div/div[35]/div[3]/div/div[2]/div[4]/div/div/div[1]/div[1]/div/div[7]/div[2]/div/div[1]',
         ).click()
         sleep(2)
     else:
