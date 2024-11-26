@@ -7,7 +7,7 @@ from time import sleep
 import undetected_chromedriver as uc
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, InvalidSelectorException
 import time
 import uuid
 
@@ -136,7 +136,6 @@ async def join_meet(meet_link, end_time=30):
 
     print("Disable microphone")
     sleep(2)
-    missing_mic = False
 
     try:
         print("Try to dismiss missing mic")
@@ -144,7 +143,6 @@ async def join_meet(meet_link, end_time=30):
         mic_element = driver.find_element(By.CLASS_NAME, "VfPpkd-vQzf8d")
         if mic_element:
             print('mic is missing')
-            missing_mic = True
     except NoSuchElementException:
         print("No missing mic element found")
 
@@ -161,26 +159,40 @@ async def join_meet(meet_link, end_time=30):
     try:
         time.sleep(2)
         print("Try to disable microphone")
-        element = driver.find_element(
-            By.XPATH,
-            '//*[@id="yDmH0d"]/c-wiz/div/div/div[35]/div[3]/div/div[2]/div[4]/div/div/div[1]/div[1]/div/div[7]/div[1]/div/div/div[1]',
-        )
+        try:
+            element = driver.find_element(
+                By.XPATH,
+                '//*[@id="yDmH0d"]/c-wiz/div/div/div[35]/div[3]/div/div[2]/div[4]/div/div/div[1]/div[1]/div/div[7]/div[1]/div/div/div[1]'
+            )
+        except NoSuchElementException:
+            element = driver.find_element(
+                By.XPATH,
+                '//*[@id="yDmH0d"]/c-wiz/div/div/div[35]/div[4]/div/div[2]/div[4]/div/div/div[1]/div[1]/div/div[7]/div[1]/div/div/div[1]'
+            )
         driver.execute_script("arguments[0].click();", element)
-    except NoSuchElementException:
-        print("No microphone to disable")
+    except (NoSuchElementException, InvalidSelectorException) as e:
+        print(f"Error disabling microphone: {e}")
 
     sleep(2)
 
     # Disable camera
     print("Disable camera")
-    if not missing_mic:
-        driver.find_element(
-            By.XPATH,
-            '//*[@id="yDmH0d"]/c-wiz/div/div/div[35]/div[3]/div/div[2]/div[4]/div/div/div[1]/div[1]/div/div[7]/div[2]/div/div[1]',
-        ).click()
+    try:
+        try:
+            driver.find_element(
+                By.XPATH,
+                '//*[@id="yDmH0d"]/c-wiz/div/div/div[35]/div[3]/div/div[2]/div[4]/div/div/div[1]/div[1]/div/div[7]/div[2]/div/div[1]'
+            ).click()
+        except NoSuchElementException:
+            driver.find_element(
+                By.XPATH,
+                '//*[@id="yDmH0d"]/c-wiz/div/div/div[35]/div[4]/div/div[2]/div[4]/div/div/div[1]/div[1]/div/div[7]/div[2]/div/div[1]'
+            ).click()
         sleep(2)
-    else:
-        print("assuming missing mic = missing camera")
+    except NoSuchElementException:
+        print("Cannot disable camera: No such element")
+    except Exception as e:
+        print(f"Cannot disable camera: {e}")
 
     # Handle authentication and meeting options
     try:
