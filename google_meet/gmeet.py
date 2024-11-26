@@ -3,14 +3,13 @@ import os
 import subprocess
 import click
 import datetime
-import json
 from dotenv import load_dotenv
 from time import sleep
 
 import undetected_chromedriver as uc
-
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
 
 load_dotenv()
 
@@ -18,66 +17,54 @@ async def run_command_async(command):
     process = await asyncio.create_subprocess_shell(
         command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
-
-    # Wait for the process to complete
     stdout, stderr = await process.communicate()
-
     return stdout, stderr
-
 
 async def google_sign_in(email, password, driver):
     driver.get("https://accounts.google.com")
     sleep(1)
     email_field = driver.find_element(By.NAME, "identifier")
     email_field.send_keys(email)
-    driver.save_screenshot("screenshots/email.png")
     sleep(2)
     driver.find_element(By.ID, "identifierNext").click()
     sleep(3)
-    driver.save_screenshot("screenshots/password.png")
     password_field = driver.find_element(By.NAME, "Passwd")
     password_field.click()
     password_field.send_keys(password)
     password_field.send_keys(Keys.RETURN)
     sleep(5)
-    driver.save_screenshot("screenshots/signed_in.png")
-
 
 async def join_meet(meet_link, end_time=30):
     print(f"start recorder for {meet_link}")
 
-    if os.path.exists("screenshots"):
-        for f in os.listdir("screenshots"):
-            os.remove(f"screenshots/{f}")
-    else:
-        os.mkdir("screenshots")
-
     print("starting virtual audio drivers")
     try:
-        subprocess.check_output(
-            "sudo rm -rf /var/run/pulse /var/lib/pulse /root/.config/pulse", shell=True
-        )
-        subprocess.check_output(
-            "sudo pulseaudio -D --verbose --exit-idle-time=-1 --system --disallow-exit  >> /dev/null 2>&1",
-            shell=True,
-        )
-        subprocess.check_output(
-            'sudo pactl load-module module-null-sink sink_name=DummyOutput sink_properties=device.description="Virtual_Dummy_Output"',
-            shell=True,
-        )
-        subprocess.check_output(
-            'sudo pactl load-module module-null-sink sink_name=MicOutput sink_properties=device.description="Virtual_Microphone_Output"',
-            shell=True,
-        )
-        subprocess.check_output(
-            "sudo pactl set-default-source MicOutput.monitor", shell=True
-        )
-        subprocess.check_output("sudo pactl set-default-sink MicOutput", shell=True)
-        subprocess.check_output(
-            "sudo pactl load-module module-virtual-source source_name=VirtualMic",
-            shell=True,
-        )
-
+        if os.uname().sysname == "Darwin":
+            print("Ensure BlackHole is installed and configured as the default audio device.")
+        else:
+            subprocess.check_output(
+                "sudo rm -rf /var/run/pulse /var/lib/pulse /root/.config/pulse", shell=True
+            )
+            subprocess.check_output(
+                "sudo pulseaudio -D --verbose --exit-idle-time=-1 --system --disallow-exit  >> /dev/null 2>&1",
+                shell=True,
+            )
+            subprocess.check_output(
+                'sudo pactl load-module module-null-sink sink_name=DummyOutput sink_properties=device.description="Virtual_Dummy_Output"',
+                shell=True,
+            )
+            subprocess.check_output(
+                'sudo pactl load-module module-null-sink sink_name=MicOutput sink_properties=device.description="Virtual_Microphone_Output"',
+                shell=True,
+            )
+            subprocess.check_output(
+                "sudo pactl set-default-source MicOutput.monitor", shell=True
+            )
+            subprocess.check_output("sudo pactl set-default-sink MicOutput", shell=True)
+            subprocess.check_output(
+                "sudo pactl load-module module-virtual-source source_name=VirtualMic",
+                shell=True,
+            )
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while setting up virtual audio drivers: {e}")
         return
@@ -103,10 +90,7 @@ async def join_meet(meet_link, end_time=30):
     email = os.getenv("GMAIL_USER_EMAIL", "")
     password = os.getenv("GMAIL_USER_PASSWORD", "")
 
-    print(f"Email: {email}")
-    print(f"Password: {password}")
-
-    if email == "" or password == "":
+    if not email or not password:
         print("No email or password specified")
         return
 
@@ -129,17 +113,13 @@ async def join_meet(meet_link, end_time=30):
         },
     )
 
-    print("screenshot")
-    driver.save_screenshot("screenshots/initial.png")
-    print("Done save initial")
-
     try:
         driver.find_element(
             By.XPATH,
             "/html/body/div/div[3]/div[2]/div/div/div/div/div[2]/div/div[1]/button",
         ).click()
         sleep(2)
-    except:
+    except NoSuchElementException:
         print("No popup")
 
     print("Disable microphone")
@@ -150,11 +130,10 @@ async def join_meet(meet_link, end_time=30):
         print("Try to dismiss missing mic")
         driver.find_element(By.CLASS_NAME, "VfPpkd-vQzf8d").find_element(By.XPATH, "..")
         sleep(2)
-        driver.save_screenshot("screenshots/missing_mic.png")
         with open("screenshots/webpage.html", "w") as f:
             f.write(driver.page_source)
         missing_mic = True
-    except:
+    except NoSuchElementException:
         pass
 
     try:
@@ -164,9 +143,7 @@ async def join_meet(meet_link, end_time=30):
             "/html/body/div/div[3]/div[2]/div/div/div/div/div[2]/div/div[1]/button",
         ).click()
         sleep(2)
-        driver.save_screenshot("screenshots/allow_microphone.png")
-        print("Done save allow microphone")
-    except:
+    except NoSuchElementException:
         print("No Allow Microphone popup")
 
     try:
@@ -175,12 +152,10 @@ async def join_meet(meet_link, end_time=30):
             By.XPATH,
             '//*[@id="yDmH0d"]/c-wiz/div/div/div[14]/div[3]/div/div[2]/div[4]/div/div/div[1]/div[1]/div/div[6]/div[1]/div/div',
         ).click()
-    except:
+    except NoSuchElementException:
         print("No microphone to disable")
 
     sleep(2)
-    driver.save_screenshot("screenshots/disable_microphone.png")
-    print("Done save microphone")
 
     print("Disable camera")
     if not missing_mic:
@@ -191,8 +166,6 @@ async def join_meet(meet_link, end_time=30):
         sleep(2)
     else:
         print("assuming missing mic = missing camera")
-    driver.save_screenshot("screenshots/disable_camera.png")
-    print("Done save camera")
 
     try:
         driver.find_element(
@@ -205,18 +178,15 @@ async def join_meet(meet_link, end_time=30):
             '//*[@id="yDmH0d"]/c-wiz/div/div/div[14]/div[3]/div/div[2]/div[4]/div/div/div[2]/div[1]/div[1]/div[3]/label/input',
         ).send_keys("TEST")
         sleep(2)
-        driver.save_screenshot("screenshots/give_non_registered_name.png")
-        print("Done save name")
         sleep(5)
         driver.find_element(
             By.XPATH,
             '//*[@id="yDmH0d"]/c-wiz/div/div/div[14]/div[3]/div/div[2]/div[4]/div/div/div[2]/div[1]/div[2]/div[1]/div[1]/button/span',
         ).click()
         sleep(5)
-    except:
+    except NoSuchElementException:
         print("authentification already done")
         sleep(5)
-        driver.save_screenshot("screenshots/authentification_already_done.png")
         print(driver.title)
         driver.find_element(
             By.XPATH,
@@ -229,8 +199,6 @@ async def join_meet(meet_link, end_time=30):
     joined = False
 
     while now < max_time and not joined:
-        driver.save_screenshot("screenshots/joined.png")
-        print("Done save joined")
         sleep(5)
 
         try:
@@ -238,9 +206,7 @@ async def join_meet(meet_link, end_time=30):
                 By.XPATH,
                 "/html/body/div[1]/div[3]/span/div[2]/div/div/div[2]/div[1]/button",
             ).click()
-            driver.save_screenshot("screenshots/remove_popup.png")
-            print("Done save popup in meeting")
-        except:
+        except NoSuchElementException:
             print("No popup in meeting")
 
         print("Try to click expand options")
@@ -252,10 +218,9 @@ async def join_meet(meet_link, end_time=30):
                     element.click()
                     expand_options = True
                     print("Expand options clicked")
-                except:
-                    print("Not able to click expand options")
+                except Exception as e:
+                    print(f"Not able to click expand options: {e}")
 
-        driver.save_screenshot("screenshots/expand_options.png")
         sleep(2)
         print("Try to move to full screen")
 
@@ -274,12 +239,12 @@ async def join_meet(meet_link, end_time=30):
                     joined = True
                     break
 
-        driver.save_screenshot("screenshots/full_screen.png")
-        print("Done save full screen")
-
     duration = end_time * 60
     print("Start recording")
-    record_command = f"ffmpeg -y -video_size 1920x1080 -framerate 30 -f x11grab -i :99 -f pulse -i default -t {duration} -c:a libmp3lame -q:a 2 recordings/output.mp3"
+    if os.uname().sysname == "Darwin":
+        record_command = f"ffmpeg -y -video_size 1920x1080 -framerate 30 -f avfoundation -i 1:0 -t {duration} -c:a libmp3lame -q:a 2 recordings/output.mp3"
+    else:
+        record_command = f"ffmpeg -y -video_size 1920x1080 -framerate 30 -f x11grab -i :99 -f pulse -i default -t {duration} -c:a libmp3lame -q:a 2 recordings/output.mp3"
 
     await asyncio.gather(
         run_command_async(record_command),
@@ -288,11 +253,9 @@ async def join_meet(meet_link, end_time=30):
     print("Done recording")
     print("- End of work")
 
-
 if __name__ == "__main__":
     meet_link = "https://meet.google.com/few-upps-rgn"
     end_time = 30
-    # end_time = input("Enter the duration in minutes (default is 30): ")
     end_time = int(end_time) if end_time else 30
     click.echo("starting google meet recorder...")
     asyncio.run(join_meet(meet_link, end_time))
