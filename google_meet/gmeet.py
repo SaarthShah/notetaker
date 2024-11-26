@@ -6,21 +6,12 @@ from time import sleep
 import undetected_chromedriver as uc
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException, InvalidSelectorException
+from selenium.common.exceptions import NoSuchElementException, InvalidSelectorException, StaleElementReferenceException
 import time
 import uuid
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-import uvicorn
 
 # Load environment variables
 load_dotenv()
-
-app = FastAPI()
-
-class MeetRequest(BaseModel):
-    meet_link: str
-    end_time: int
 
 # Asynchronous function to run shell commands
 async def run_command_async(command):
@@ -241,6 +232,7 @@ async def join_meet(meet_link, end_time=30):
     # Start capturing the transcript
     print("Start capturing transcript")
     transcript = []
+    seen_transcripts = set()
 
     start_time = time.time()
 
@@ -268,14 +260,19 @@ async def join_meet(meet_link, end_time=30):
             sleep(2)
             transcript_elements = driver.find_elements(By.CSS_SELECTOR, ".a4cQT .nMcdL")
             for element in transcript_elements:
-                person_name = element.find_element(By.CLASS_NAME, "KcIKyf").text
-                transcript_text = element.find_element(By.CLASS_NAME, "bh44bd").text
-                timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-                transcript.append({
-                    "personName": person_name,
-                    "timeStamp": timestamp,
-                    "transcriptText": transcript_text
-                })
+                try:
+                    person_name = element.find_element(By.CLASS_NAME, "KcIKyf").text
+                    transcript_text = element.find_element(By.CLASS_NAME, "bh44bd").text
+                    if transcript_text not in seen_transcripts:
+                        seen_transcripts.add(transcript_text)
+                        timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                        transcript.append({
+                            "personName": person_name,
+                            "timeStamp": timestamp,
+                            "transcriptText": transcript_text
+                        })
+                except StaleElementReferenceException:
+                    print("Stale element reference exception caught, skipping this element.")
             print(transcript)
             print(end_time * 60 - (time.time() - start_time))
     except Exception as e:
@@ -296,15 +293,3 @@ async def join_meet(meet_link, end_time=30):
     driver.close()
     print("Closed the Google Meet tab")
     print("- End of work")
-
-@app.post("/join-meet")
-async def join_meet_endpoint(request: MeetRequest):
-    if not request.meet_link:
-        raise HTTPException(status_code=400, detail="Meet link is required")
-    if request.end_time <= 0:
-        raise HTTPException(status_code=400, detail="End time must be greater than 0")
-    await join_meet(request.meet_link, request.end_time)
-    return {"message": "Meeting joined and transcript captured successfully"}
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
