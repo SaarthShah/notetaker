@@ -1,7 +1,6 @@
 import asyncio
 import os
 import subprocess
-import click
 from dotenv import load_dotenv
 from time import sleep
 import undetected_chromedriver as uc
@@ -10,9 +9,18 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, InvalidSelectorException
 import time
 import uuid
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uvicorn
 
 # Load environment variables
 load_dotenv()
+
+app = FastAPI()
+
+class MeetRequest(BaseModel):
+    meet_link: str
+    end_time: int
 
 # Asynchronous function to run shell commands
 async def run_command_async(command):
@@ -247,7 +255,12 @@ async def join_meet(meet_link, end_time=30):
                 caption_button.click()
             break  # Exit the loop if the button is found and clicked
         except NoSuchElementException:
-            print("Captions button not found. Retrying...")
+            try:
+                waiting_text = driver.find_element(By.XPATH, '//*[contains(text(), "Asking to be let in")]')
+                if waiting_text:
+                    print("Waiting to be let in")
+            except NoSuchElementException:
+                print("Captions button not found. Retrying...")
             sleep(1)  # Wait for a short period before retrying
 
     try:
@@ -284,11 +297,14 @@ async def join_meet(meet_link, end_time=30):
     print("Closed the Google Meet tab")
     print("- End of work")
 
-# Entry point for the script
+@app.post("/join-meet")
+async def join_meet_endpoint(request: MeetRequest):
+    if not request.meet_link:
+        raise HTTPException(status_code=400, detail="Meet link is required")
+    if request.end_time <= 0:
+        raise HTTPException(status_code=400, detail="End time must be greater than 0")
+    await join_meet(request.meet_link, request.end_time)
+    return {"message": "Meeting joined and transcript captured successfully"}
+
 if __name__ == "__main__":
-    meet_link = "https://meet.google.com/srr-zhkv-ydv"
-    end_time = 3
-    end_time = int(end_time) if end_time else 30
-    click.echo("starting google meet recorder...")
-    asyncio.run(join_meet(meet_link, end_time))
-    click.echo("finished recording google meet.")
+    uvicorn.run(app, host="0.0.0.0", port=8000)
