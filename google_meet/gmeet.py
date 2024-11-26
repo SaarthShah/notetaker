@@ -11,8 +11,10 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 
+# Load environment variables
 load_dotenv()
 
+# Asynchronous function to run shell commands
 async def run_command_async(command):
     process = await asyncio.create_subprocess_shell(
         command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -20,6 +22,7 @@ async def run_command_async(command):
     stdout, stderr = await process.communicate()
     return stdout, stderr
 
+# Asynchronous function to handle Google sign-in
 async def google_sign_in(email, password, driver):
     driver.get("https://accounts.google.com")
     sleep(1)
@@ -34,9 +37,11 @@ async def google_sign_in(email, password, driver):
     password_field.send_keys(Keys.RETURN)
     sleep(5)
 
+# Main function to join a Google Meet
 async def join_meet(meet_link, end_time=30):
     print(f"start recorder for {meet_link}")
 
+    # Setup virtual audio drivers
     print("starting virtual audio drivers")
     try:
         if os.uname().sysname == "Darwin":
@@ -71,6 +76,7 @@ async def join_meet(meet_link, end_time=30):
 
     print('here subprocess end')
 
+    # Configure Chrome options
     options = uc.ChromeOptions()
     options.add_argument("--use-fake-ui-for-media-stream")
     options.add_argument("--window-size=1920x1080")
@@ -83,9 +89,11 @@ async def join_meet(meet_link, end_time=30):
     options.add_argument("--disable-dev-shm-usage")
     log_path = "chromedriver.log"
 
+    # Initialize Chrome driver
     driver = uc.Chrome(service_log_path=log_path, use_subprocess=False, options=options)
     driver.set_window_size(1920, 1080)
 
+    # Retrieve email and password from environment variables
     print('here')
     email = os.getenv("GMAIL_USER_EMAIL", "")
     password = os.getenv("GMAIL_USER_PASSWORD", "")
@@ -94,11 +102,14 @@ async def join_meet(meet_link, end_time=30):
         print("No email or password specified")
         return
 
+    # Sign in to Google
     print("Google Sign in")
     await google_sign_in(email, password, driver)
 
+    # Access the Google Meet link
     driver.get(meet_link)
 
+    # Grant necessary permissions
     driver.execute_cdp_cmd(
         "Browser.grantPermissions",
         {
@@ -113,6 +124,7 @@ async def join_meet(meet_link, end_time=30):
         },
     )
 
+    # Handle popups and disable microphone
     try:
         sleep(2)
         driver.find_element(
@@ -157,6 +169,7 @@ async def join_meet(meet_link, end_time=30):
 
     sleep(2)
 
+    # Disable camera
     print("Disable camera")
     if not missing_mic:
         driver.find_element(
@@ -167,6 +180,7 @@ async def join_meet(meet_link, end_time=30):
     else:
         print("assuming missing mic = missing camera")
 
+    # Handle authentication and meeting options
     try:
         driver.find_element(
             By.XPATH,
@@ -188,12 +202,22 @@ async def join_meet(meet_link, end_time=30):
         print("authentification already done")
         sleep(5)
         print(driver.title)
-        driver.find_element(
-            By.XPATH,
-            '//*[@id="yDmH0d"]/c-wiz/div/div/div[14]/div[3]/div/div[2]/div[4]/div/div/div[2]/div[1]/div[2]/div[1]/div[1]/button',
-        ).click()
+        try:
+            driver.find_element(
+                By.XPATH,
+                '//*[@id="yDmH0d"]/c-wiz/div/div/div[35]/div[4]/div/div[2]/div[4]/div/div/div[2]/div[1]/div[2]/div[1]/div/div/button'
+            ).click()
+        except NoSuchElementException:
+            try:
+                driver.find_element(
+                    By.XPATH,
+                    '//*[@id="yDmH0d"]/c-wiz/div/div/div[35]/div[3]/div/div[2]/div[4]/div/div/div[2]/div[1]/div[2]/div[1]/div/div/button'
+                ).click()
+            except NoSuchElementException:
+                print("Neither button is present")
         sleep(5)
 
+    # Monitor meeting status and handle full screen
     now = datetime.datetime.now()
     max_time = now + datetime.timedelta(minutes=5)
     joined = False
@@ -239,6 +263,7 @@ async def join_meet(meet_link, end_time=30):
                     joined = True
                     break
 
+    # Start recording the meeting
     duration = end_time * 60
     print("Start recording")
     if os.uname().sysname == "Darwin":
@@ -253,9 +278,10 @@ async def join_meet(meet_link, end_time=30):
     print("Done recording")
     print("- End of work")
 
+# Entry point for the script
 if __name__ == "__main__":
     meet_link = "https://meet.google.com/few-upps-rgn"
-    end_time = 30
+    end_time = 3
     end_time = int(end_time) if end_time else 30
     click.echo("starting google meet recorder...")
     asyncio.run(join_meet(meet_link, end_time))
