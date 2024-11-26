@@ -2,14 +2,14 @@ import asyncio
 import os
 import subprocess
 import click
-import datetime
 from dotenv import load_dotenv
 from time import sleep
-
 import undetected_chromedriver as uc
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
+import time
+import uuid
 
 # Load environment variables
 load_dotenv()
@@ -135,7 +135,7 @@ async def join_meet(meet_link, end_time=30):
         print("No popup")
 
     print("Disable microphone")
-    sleep(10)
+    sleep(2)
     missing_mic = False
 
     try:
@@ -191,7 +191,6 @@ async def join_meet(meet_link, end_time=30):
             By.XPATH,
             '//*[@id="yDmH0d"]/c-wiz/div/div/div[14]/div[3]/div/div[2]/div[4]/div/div/div[2]/div[1]/div[1]/div[3]/label/input',
         ).send_keys("TEST")
-        sleep(2)
         sleep(5)
         driver.find_element(
             By.XPATH,
@@ -217,70 +216,58 @@ async def join_meet(meet_link, end_time=30):
                 print("Neither button is present")
         sleep(5)
 
-    # Monitor meeting status and handle full screen
-    now = datetime.datetime.now()
-    max_time = now + datetime.timedelta(minutes=5)
-    joined = False
+    # Start capturing the transcript
+    print("Start capturing transcript")
+    transcript = []
 
-    while now < max_time and not joined:
-        sleep(5)
+    start_time = time.time()
 
-        try:
-            driver.find_element(
-                By.XPATH,
-                "/html/body/div[1]/div[3]/span/div[2]/div/div/div[2]/div[1]/button",
-            ).click()
-        except NoSuchElementException:
-            print("No popup in meeting")
+    try:
+        caption_button = driver.find_element(By.XPATH, '//*[@id="yDmH0d"]/c-wiz/div/div/div[34]/div[4]/div[10]/div/div/div[2]/div/div[3]/span/button')
+        # Check if the button is not enabled
+        print(caption_button)
+        if not caption_button.is_enabled():
+            caption_button.click()
+    except NoSuchElementException:
+        print("Captions button not found.")
 
-        print("Try to click expand options")
-        elements = driver.find_elements(By.CLASS_NAME, "VfPpkd-Bz112c-LgbsSe")
-        expand_options = False
-        for element in elements:
-            if element.get_attribute("aria-label") == "More options":
-                try:
-                    element.click()
-                    expand_options = True
-                    print("Expand options clicked")
-                except Exception as e:
-                    print(f"Not able to click expand options: {e}")
+    try:
+        while (time.time() - start_time) < (end_time * 60):
+            sleep(2)
+            transcript_elements = driver.find_elements(By.CSS_SELECTOR, ".a4cQT .nMcdL")
+            for element in transcript_elements:
+                person_name = element.find_element(By.CLASS_NAME, "KcIKyf").text
+                transcript_text = element.find_element(By.CLASS_NAME, "bh44bd").text
+                timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                transcript.append({
+                    "personName": person_name,
+                    "timeStamp": timestamp,
+                    "transcriptText": transcript_text
+                })
+            print(transcript)
+            print(end_time * 60 - (time.time() - start_time))
+    except Exception as e:
+        print(f"An error occurred while capturing the transcript: {e}")
 
-        sleep(2)
-        print("Try to move to full screen")
+    print("Done capturing transcript")
 
-        if expand_options:
-            li_elements = driver.find_elements(
-                By.CLASS_NAME, "V4jiNc.VfPpkd-StrnGf-rymPhb-ibnC6b"
-            )
-            for li_element in li_elements:
-                txt = li_element.text.strip().lower()
-                if "fullscreen" in txt:
-                    li_element.click()
-                    print("Full Screen clicked")
-                    joined = True
-                    break
-                elif "minimize" in txt or "close_fullscreen" in txt:
-                    joined = True
-                    break
+    # Save the transcript to a file
+    transcript_dir = "transcripts"
+    os.makedirs(transcript_dir, exist_ok=True)
+    transcript_file = os.path.join(transcript_dir, f"{uuid.uuid4()}.txt")
+    with open(transcript_file, "w") as f:
+        for entry in transcript:
+            f.write(f"{entry['timeStamp']} - {entry['personName']}: {entry['transcriptText']}\n")
+    print(f"Transcript saved to {transcript_file}")
 
-    # Start recording the meeting
-    duration = end_time * 60
-    print("Start recording")
-    if os.uname().sysname == "Darwin":
-        record_command = f"ffmpeg -y -video_size 1920x1080 -framerate 30 -f avfoundation -i 1:0 -t {duration} -c:a libmp3lame -q:a 2 recordings/output.mp3"
-    else:
-        record_command = f"ffmpeg -y -video_size 1920x1080 -framerate 30 -f x11grab -i :99 -f pulse -i default -t {duration} -c:a libmp3lame -q:a 2 recordings/output.mp3"
-
-    await asyncio.gather(
-        run_command_async(record_command),
-    )
-
-    print("Done recording")
+    # Close the Google Meet tab after capturing
+    driver.close()
+    print("Closed the Google Meet tab")
     print("- End of work")
 
 # Entry point for the script
 if __name__ == "__main__":
-    meet_link = "https://meet.google.com/few-upps-rgn"
+    meet_link = "https://meet.google.com/srr-zhkv-ydv"
     end_time = 3
     end_time = int(end_time) if end_time else 30
     click.echo("starting google meet recorder...")
