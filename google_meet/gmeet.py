@@ -159,11 +159,13 @@ async def join_meet(meet_link, end_time=30):
         print("No Allow Microphone popup")
 
     try:
+        time.sleep(2)
         print("Try to disable microphone")
-        driver.find_element(
+        element = driver.find_element(
             By.XPATH,
             '//*[@id="yDmH0d"]/c-wiz/div/div/div[35]/div[3]/div/div[2]/div[4]/div/div/div[1]/div[1]/div/div[7]/div[1]/div/div/div[1]',
-        ).click()
+        )
+        driver.execute_script("arguments[0].click();", element)
     except NoSuchElementException:
         print("No microphone to disable")
 
@@ -222,14 +224,19 @@ async def join_meet(meet_link, end_time=30):
 
     start_time = time.time()
 
-    try:
-        caption_button = driver.find_element(By.XPATH, '//*[@id="yDmH0d"]/c-wiz/div/div/div[34]/div[4]/div[10]/div/div/div[2]/div/div[3]/span/button')
-        # Check if the button is not enabled
-        print(caption_button)
-        if not caption_button.is_enabled():
-            caption_button.click()
-    except NoSuchElementException:
-        print("Captions button not found.")
+    time.sleep(1)
+
+    while True and (time.time() - start_time) < (end_time * 60):
+        try:
+            caption_button = driver.find_element(By.XPATH, '//*[@id="yDmH0d"]/c-wiz/div/div/div[34]/div[4]/div[10]/div/div/div[2]/div/div[3]/span/button')
+            # Check if the button is not enabled by checking the aria-pressed attribute
+            print(caption_button)
+            if caption_button.get_attribute("aria-pressed") == "false":
+                caption_button.click()
+            break  # Exit the loop if the button is found and clicked
+        except NoSuchElementException:
+            print("Captions button not found. Retrying...")
+            sleep(1)  # Wait for a short period before retrying
 
     try:
         while (time.time() - start_time) < (end_time * 60):
