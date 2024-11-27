@@ -209,7 +209,7 @@ async def join_meet(meet_link, end_time=30):
             By.XPATH,
             '//*[@id="yDmH0d"]/c-wiz/div/div/div[14]/div[3]/div/div[2]/div[4]/div/div/div[2]/div[1]/div[2]/div[1]/div[1]/button/span',
         ).click()
-        sleep(5)
+        sleep(2)
     except NoSuchElementException:
         print("authentification already done")
         sleep(5)
@@ -227,16 +227,14 @@ async def join_meet(meet_link, end_time=30):
                 ).click()
             except NoSuchElementException:
                 print("Neither button is present")
-        sleep(5)
+        sleep(2)
 
     # Start capturing the transcript
     print("Start capturing transcript")
     transcript = []
-    seen_transcripts = set()
+    last_transcript = ""
 
     start_time = time.time()
-
-    time.sleep(1)
 
     while True and (time.time() - start_time) < (end_time * 60):
         try:
@@ -263,17 +261,17 @@ async def join_meet(meet_link, end_time=30):
                 try:
                     person_name = element.find_element(By.CLASS_NAME, "KcIKyf").text
                     transcript_text = element.find_element(By.CLASS_NAME, "bh44bd").text
-                    if transcript_text not in seen_transcripts:
-                        seen_transcripts.add(transcript_text)
+                    if transcript_text != last_transcript:
+                        last_transcript = transcript_text
                         timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
                         transcript.append({
                             "personName": person_name,
                             "timeStamp": timestamp,
                             "transcriptText": transcript_text
                         })
+                        print(f"New transcript: {transcript_text}")
                 except StaleElementReferenceException:
                     print("Stale element reference exception caught, skipping this element.")
-            print(transcript)
             print(end_time * 60 - (time.time() - start_time))
     except Exception as e:
         print(f"An error occurred while capturing the transcript: {e}")
