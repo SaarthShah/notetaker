@@ -1,15 +1,11 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-
 import { createClient } from '@/app/utils/supabase-server'
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
@@ -18,18 +14,18 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(data)
 
   if (error) {
-    redirect('/error')
+    console.error('Login error:', error)
+    return { success: false, message: 'Login failed' }
+  } else {
+    console.log('Login successful for:', data.email)
+    redirect('/dashboard') // Redirect to a new page without refreshing the current page
+    return { success: true, message: 'Login successful' }
   }
-
-  revalidatePath('/', 'layout')
-  redirect('/')
 }
 
 export async function signup(formData: FormData) {
   const supabase = await createClient()
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
@@ -38,11 +34,13 @@ export async function signup(formData: FormData) {
   const { error } = await supabase.auth.signUp(data)
 
   if (error) {
-    redirect('/error')
+    console.error('Signup error:', error)
+    return { success: false, message: 'Signup failed' }
+  } else {
+    console.log('Signup successful for:', data.email)
+    redirect('/welcome') // Redirect to a new page without refreshing the current page
+    return { success: true, message: 'Signup successful' }
   }
-
-  revalidatePath('/', 'layout')
-  redirect('/')
 }
 
 export async function logout() {
@@ -51,9 +49,11 @@ export async function logout() {
   const { error } = await supabase.auth.signOut()
 
   if (error) {
-    redirect('/error')
+    console.error('Logout error:', error)
+    return { success: false, message: 'Logout failed' }
+  } else {
+    console.log('Logout successful')
+    redirect('/auth/login') // Redirect to a new page without refreshing the current page
+    return { success: true, message: 'Logout successful' }
   }
-
-  revalidatePath('/', 'layout')
-  redirect('/')
 }

@@ -9,19 +9,27 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { login } from "@/app/utils/supabase-auth-actions"
 
-interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {
+  onError?: (errorMessage: string) => void;
+}
 
-export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
+export function UserAuthForm({ className, onError, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
 
-  async function onSubmit(event: React.SyntheticEvent) {
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setIsLoading(true)
 
-    const formData = new FormData(event.currentTarget as HTMLFormElement)
-    await login(formData)
-
-    setIsLoading(false)
+    const formData = new FormData(event.currentTarget)
+    try {
+      await login(formData)
+    } catch (error) {
+      if (onError) {
+        onError('An error occurred during login.')
+      }
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -56,7 +64,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
               disabled={isLoading}
             />
           </div>
-          <Button disabled={isLoading}>
+          <Button type="submit" disabled={isLoading}>
             {isLoading && (
               <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
             )}
