@@ -1,5 +1,5 @@
 import { Metadata } from "next"
-import { LoginBox } from "../../../components/login-box"
+import { LoginBox } from "@/components/login-box"
 
 export const metadata: Metadata = {
   title: "Authentication",
