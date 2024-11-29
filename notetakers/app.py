@@ -58,6 +58,7 @@ async def join_meet_endpoint(request: MeetRequest):
         "start_time": start_time.isoformat(),
         "end_time": end_time.isoformat(),
         "attendees": json.dumps(list(set([entry['user'] for entry in cleaned_transcript]))),
+        "type":"gmeet"
     }
     response = supabase.table("meetings").insert(data).execute()
     print(response)

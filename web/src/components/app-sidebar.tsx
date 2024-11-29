@@ -1,100 +1,111 @@
-import { Calendar, Home, Inbox, Search, Settings, User2, ChevronUp } from "lucide-react"
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar"
+'use client';
+
+import { Calendar, Home, Inbox, Search, Settings, User2, ChevronUp, MessageSquare, Zap } from "lucide-react"
+import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import LogoutButton from '@/components/logout-button'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/app/utils/supabase-server'
+import { createClient } from '@/app/utils/supabase-browser'
+import { useContext, useEffect, useState } from 'react';
+import { SidebarTitleContext } from '@/components/sidebar-context';
 
 // Menu items.
 const items = [
   {
-    title: "Home",
-    url: "#",
-    icon: Home,
-  },
-  {
-    title: "Inbox",
-    url: "#",
-    icon: Inbox,
-  },
-  {
-    title: "Calendar",
-    url: "#",
+    title: "Meetings",
     icon: Calendar,
+    value:"meetings"
   },
   {
-    title: "Search",
-    url: "#",
-    icon: Search,
+    title: "Integrations",
+    icon: Zap,
+    value:"integrations"
   },
   {
-    title: "Settings",
-    url: "#",
-    icon: Settings,
-  },
+    title: "Ask AI",
+    icon: MessageSquare,
+    value:"askai"
+  }
 ]
 
-export async function AppSidebar() {
-  const supabase = await createClient()
+export function AppSidebar() {
+  const [user, setUser] = useState(null);
 
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data?.user) {
-    redirect('/auth/login')
+  useEffect(() => {
+    const fetchUser = async () => {
+      const supabase = await createClient();
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data?.user) {
+        redirect('/auth/login');
+      } else {
+        setUser(data.user);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  const sidebarContext = useContext(SidebarTitleContext);
+  if (!sidebarContext) {
+    throw new Error("SidebarContext is not available");
+  }
+  const { setActiveTab } = sidebarContext;
+
+  if (!user) {
+    return null; // or a loading spinner
   }
 
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <img src="/path/to/company-logo.png" alt="Company Logo" className="w-full h-auto" />
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {items.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <a href={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton>
-                    <User2 /> {data.user.email}
-                    <ChevronUp className="ml-auto" />
+    <Sidebar>
+      <SidebarHeader>
+        <div className="text-center font-bold text-lg">Catchflow</div>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {items.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <div onClick={() => { setActiveTab(item.value); }}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </div>
                   </SidebarMenuButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  side="top"
-                  className="w-[--radix-popper-anchor-width]"
-                >
-                  <DropdownMenuItem>
-                    <span>Account</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <span>Billing</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <LogoutButton />
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      </Sidebar>
-    </SidebarProvider>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton>
+                  <User2 /> {user.email}
+                  <ChevronUp className="ml-auto" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                side="top"
+                className="w-[--radix-popper-anchor-width]"
+              >
+                <DropdownMenuItem>
+                  <span>Account</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <span>Billing</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <LogoutButton />
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
   )
 }

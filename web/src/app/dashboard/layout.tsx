@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import "@/app/globals.css";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarContextProvider } from "@/components/sidebar-context";
 import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -10,13 +11,15 @@ export const metadata: Metadata = {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider>
+    <SidebarContextProvider>
+      <SidebarProvider>
       <div style={{ display: "flex" }}>
         <AppSidebar />
         <main style={{ flex: 1 }}>
           {children}
         </main>
       </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </SidebarContextProvider>
   );
 }
