@@ -11,7 +11,7 @@ import time
 import uuid
 
 # Load environment variables
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), '../.env'))
 
 # Asynchronous function to run shell commands
 async def run_command_async(command):
@@ -280,7 +280,7 @@ async def join_meet(meet_link, end_time=30):
 
     # Return the transcript instead of saving to a file
     print("Returning the captured transcript")
-    
+
     # Close the Google Meet tab after capturing
     driver.close()
     print("Closed the Google Meet tab")

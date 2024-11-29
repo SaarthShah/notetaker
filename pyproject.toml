@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "notetaker"
+version = "0.1.0"
+description = ""
+authors = ["Saarth Shah <69341449+SaarthShah@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.115.5"
+openai = "^1.55.3"
+supabase = "^2.10.0"
+selenium = "^4.27.1"
+asyncio = "^3.4.3"
+pydantic = "^2.10.2"
+uvicorn = "^0.32.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

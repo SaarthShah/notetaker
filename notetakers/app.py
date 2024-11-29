@@ -8,6 +8,7 @@ from agent.summarizer import summarize_transcript
 from supabase import create_client, Client
 
 import os
+import json
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -34,6 +35,9 @@ async def join_meet_endpoint(request: MeetRequest):
     
     start_time = datetime.now()
     transcript = await join_meet(request.meet_link, request.end_time)
+
+    # Calculate duration
+    end_time = datetime.now()
     
     if not transcript:
         return {"summary": "Agent was never accepted into the call", "cleaned_transcript": []}
@@ -44,21 +48,18 @@ async def join_meet_endpoint(request: MeetRequest):
     
     summary = summarize_transcript(cleaned_transcript_text)
     
-    # Calculate duration
-    end_time = datetime.now()
-    duration = (end_time - start_time).total_seconds()
-    
+
     # Add to Supabase
     data = {
         "user_id": request.user_id,
-        "meet_link": request.meet_link,
-        "summary": summary,
-        "cleaned_transcript": cleaned_transcript,
+        "meeting_link": request.meet_link,
+        "summary": json.dumps(summary),
+        "transcript": json.dumps(cleaned_transcript),
         "start_time": start_time.isoformat(),
         "end_time": end_time.isoformat(),
-        "duration": duration
+        "attendees": json.dumps(list(set([entry['user'] for entry in cleaned_transcript]))),
     }
-    response = supabase.table("meet_summaries").insert(data).execute()
+    response = supabase.table("meetings").insert(data).execute()
     print(response)
     
     return {"summary": summary, "cleaned_transcript": cleaned_transcript}
