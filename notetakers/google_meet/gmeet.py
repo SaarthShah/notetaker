@@ -278,16 +278,12 @@ async def join_meet(meet_link, end_time=30):
 
     print("Done capturing transcript")
 
-    # Save the transcript to a file
-    transcript_dir = "transcripts"
-    os.makedirs(transcript_dir, exist_ok=True)
-    transcript_file = os.path.join(transcript_dir, f"{uuid.uuid4()}.txt")
-    with open(transcript_file, "w") as f:
-        for entry in transcript:
-            f.write(f"{entry['timeStamp']} - {entry['personName']}: {entry['transcriptText']}\n")
-    print(f"Transcript saved to {transcript_file}")
-
+    # Return the transcript instead of saving to a file
+    print("Returning the captured transcript")
+    
     # Close the Google Meet tab after capturing
     driver.close()
     print("Closed the Google Meet tab")
     print("- End of work")
+
+    return transcript

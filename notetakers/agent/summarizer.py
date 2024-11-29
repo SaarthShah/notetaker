@@ -7,7 +7,7 @@ class SummaryEvent(BaseModel):
     summary: str
     action_items: list[str]
 
-def summarizeTranscript(transcript, prompt=""):
+def summarize_transcript(transcript, prompt=""):
     completion = client.beta.chat.completions.parse(
     model="gpt-4o-2024-08-06",
     messages=[
@@ -18,5 +18,5 @@ def summarizeTranscript(transcript, prompt=""):
     )
 
     event = completion.choices[0].message.parsed
-    return {"summary":event.summary,
-            "action_items":event.action_items}
+    return {"summary": event.summary,
+            "action_items": event.action_items}
