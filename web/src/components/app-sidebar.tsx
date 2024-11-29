@@ -49,7 +49,7 @@ export function AppSidebar() {
   if (!sidebarContext) {
     throw new Error("SidebarContext is not available");
   }
-  const { setActiveTab } = sidebarContext;
+  const { activeTab, setActiveTab } = sidebarContext;
 
   if (!user) {
     return null; // or a loading spinner
@@ -67,9 +67,12 @@ export function AppSidebar() {
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <div onClick={() => { setActiveTab(item.value); }}>
-                      <item.icon />
-                      <span>{item.title}</span>
+                    <div 
+                      onClick={() => { setActiveTab(item.value); }}
+                      className={activeTab === item.value ? 'bg-sidebar-accent' : ''}
+                    >
+                      <item.icon className="w-6 h-6" />
+                      <span className="text-lg">{item.title}</span>
                     </div>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -84,8 +87,8 @@ export function AppSidebar() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton>
-                  <User2 /> {user.email}
-                  <ChevronUp className="ml-auto" />
+                  <User2 className="w-6 h-6" /> <span className="text-sm">{user.email}</span>
+                  <ChevronUp className="ml-auto w-6 h-6" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent

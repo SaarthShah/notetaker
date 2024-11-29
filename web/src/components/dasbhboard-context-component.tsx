@@ -4,6 +4,7 @@ import { User } from './interfaces/user';
 import { useEffect, useState, useContext } from 'react';
 import { createClient } from '@/app/utils/supabase-browser';
 import { SidebarTitleContext } from '@/components/sidebar-context';
+import { Meetings } from './meetings';
 
 export default function DashboardContextComponent() {
   const [user, setUser] = useState<User | null>(null);
@@ -29,7 +30,7 @@ export default function DashboardContextComponent() {
   const renderContent = () => {
     switch (activeTab) {
       case 'meetings':
-        return <p>Meetings Content</p>;
+        return <Meetings/>;
       case 'askai':
         return <p>Ask AI Content</p>;
       case 'integrations':
@@ -41,7 +42,6 @@ export default function DashboardContextComponent() {
 
   return (
     <div className='py-5'>
-      {user ? <p>Hello {user.email}</p> : <p>Loading user data...</p>}
       {renderContent()}
     </div>
   );

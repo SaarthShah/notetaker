@@ -10,7 +10,7 @@ interface SidebarContextType {
 export const SidebarTitleContext = createContext<SidebarContextType | undefined>(undefined);
 
 export const SidebarContextProvider = ({ children }: { children: ReactNode }) => {
-  const [activeTab, setActiveTab] = useState("Meetings");
+  const [activeTab, setActiveTab] = useState("meetings");
 
   return (
     <SidebarTitleContext.Provider value={{ activeTab, setActiveTab }}>
