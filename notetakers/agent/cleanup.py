@@ -61,4 +61,4 @@ def clean_google_meet_transcript(transcript):
                 # Update the last timestamp for this user
                 last_user_timestamp[user] = timestamp
 
-    return cleaned_statements
+    return "".join(str(cleaned_statements))
