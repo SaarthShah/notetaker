@@ -39,7 +39,6 @@ export async function GET(request: Request) {
       return redirect('/error');
     }
 
-    console.log(tokenData)
 
     const { access_token, expires_in, refresh_token, scope, token_type } = tokenData;
 
@@ -76,14 +75,13 @@ export async function GET(request: Request) {
 
     if (error) {
       console.error('Error updating supabase:', error);
-    } else {
-      console.log('Supabase update response:', data);
+      return redirect('/error')
     }
 
     return new Response('<html><body><h1>Thank you for connecting your calendar with catchflow</h1></body></html>', {
       headers: { 'Content-Type': 'text/html' },
     });
-    
+
   } catch (error) {
     console.error('Error processing OAuth callback:', error);
     return redirect('/error');
