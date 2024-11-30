@@ -11,6 +11,7 @@ import os
 import json
 from dotenv import load_dotenv
 from fastapi.responses import JSONResponse
+from calendars.google import get_access_token_from_refresh_token, sync_google_calendar_events
 
 load_dotenv()
 
@@ -66,50 +67,92 @@ async def join_meet_endpoint(request: MeetRequest):
     
     return {"summary": summary, "cleaned_transcript": cleaned_transcript}
 
-@app.post('/gcal/notifications')
+@app.post('/gcal-notifications')
 async def handle_notification(request: Request):
     try:
-        # Extract the notification data from the request
-        notification_data = await request.json()
-        print("Received notification:", notification_data)
+        # Extract headers from the request
+        headers = request.headers
+        channel_id = headers.get('X-Goog-Channel-ID')
+        resource_state = headers.get('X-Goog-Resource-State')
 
-        # Always create a new txt file for the notification data
-        with open("notification_data.txt", "w") as file:
-            file.write(json.dumps(notification_data) + "\n")
+        print("Received notification headers:", headers)
 
-        # Check the type of change (add, update, delete)
-        event_id = notification_data.get('id')
-        event_status = notification_data.get('status')
-        event_summary = notification_data.get('summary', '')
-        event_description = notification_data.get('description', '')
-        event_start = notification_data.get('start', {}).get('dateTime')
-        event_end = notification_data.get('end', {}).get('dateTime')
-        event_link = notification_data.get('hangoutLink', '')
-        event_attendees = json.dumps([attendee['email'] for attendee in notification_data.get('attendees', [])])
+        # Always create a new txt file for the notification headers
+        with open("notification_headers.txt", "w") as file:
+            file.write(json.dumps(dict(headers)) + "\n")
+        print("Notification headers written to file.")
 
-        if not event_id or not event_status:
-            raise HTTPException(status_code=400, detail="Event ID and status are required")
+        if resource_state != 'exists':
+            print("Resource state is not 'exists'.")
+            raise HTTPException(status_code=400, detail="Resource state is not 'exists'")
 
-        if event_status == 'confirmed':
-            # Add or update the event in the database
-            response = supabase.table("calevents").upsert({
-                "event_id": event_id,
-                "summary": event_summary,
-                "description": event_description,
-                "start_time": event_start,
-                "end_time": event_end,
-                "link": event_link,
-                "attendees": event_attendees
-            }, on_conflict=["event_id"]).execute()
-            print(f"Event {event_id} added/updated in the database.")
-        elif event_status == 'cancelled':
-            # Delete the event from the database
-            response = supabase.table("calevents").delete().eq("event_id", event_id).execute()
-            print(f"Event {event_id} deleted from the database.")
+        if not channel_id:
+            print("Channel ID is missing.")
+            raise HTTPException(status_code=400, detail="Channel ID is required")
+
+        # Fetch the Google refresh token and sync token from the 'integrations' table using the channel_id (user_id)
+        print(f"Fetching Google tokens for user_id: {channel_id}")
+        response = supabase.table("integrations").select("google_token", "google_sync_token").eq("user_id", channel_id).execute()
+        if not response.data:
+            print("Google tokens not found for the given user_id.")
+            raise HTTPException(status_code=404, detail="Google tokens not found for the given user_id")
+
+        google_refresh_token = response.data[0]['google_token']['refresh_token']
+        sync_token = response.data[0].get('google_sync_token')
+        print("Google tokens retrieved successfully.")
+
+        # Use the refresh token to get a new access token
+        print("Obtaining new access token using the refresh token.")
+        access_token = await get_access_token_from_refresh_token(google_refresh_token)
+        if not access_token:
+            print("Failed to obtain access token.")
+            raise HTTPException(status_code=500, detail="Failed to obtain access token")
+        print("Access token obtained successfully.")
+
+        # Perform a sync using the sync token
+        print("Performing sync using the sync token.")
+        events, new_sync_token = await sync_google_calendar_events(access_token, sync_token)
+        if new_sync_token:
+            supabase.table("integrations").update({"google_sync_token": new_sync_token}).eq("user_id", channel_id).execute()
+        print("Sync completed successfully.")
+
+        # Filter events with valid meeting links
+        meet_events = [event for event in events if 'hangoutLink' in event or 'location' in event and any(url in event['location'] for url in ['meet.google.com', 'zoom.us', 'teams.microsoft.com'])]
+        
+        # Insert or update meet events in the Supabase database
+        for event in meet_events:
+            event_data = {
+                "user_id": channel_id,
+                "event_id": event['id'],
+                "summary": event.get('summary', ''),
+                "description": event.get('description', ''),
+                "start_time": event['start']['dateTime'],
+                "end_time": event['end']['dateTime'],
+                "link": event.get('hangoutLink', event.get('location', '')),
+                "attendees": json.dumps([attendee['email'] for attendee in event.get('attendees', [])]),
+            }
+            supabase.table("calevents").upsert(event_data, on_conflict=["event_id"]).execute()
+        
+        # Delete any non-meet or canceled events from the Supabase database
+        non_meet_event_ids = [event['id'] for event in events if event not in meet_events or event.get('status') == 'cancelled']
+        if non_meet_event_ids:
+            supabase.table("calevents").delete().in_("event_id", non_meet_event_ids).execute()
+        
+        print('Events with valid meeting links upserted/updated in Supabase successfully.')
 
         return JSONResponse({"status": "success"}, status_code=200)
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid JSON payload")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        print(f"Request URL: {request.url}")
+        print(f"Request Method: {request.method}")
+        print(f"Request Headers: {request.headers}")
+        print(f"Request Query Params: {request.query_params}")
+        try:
+            request_body = await request.body()
+            print(f"Request Body (text): {request_body.decode('utf-8')}")
+        except Exception as e:
+            print(f"Request Body: Unable to read body, error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid request")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -1,9 +1,13 @@
 import aiohttp
 import json 
 from supabase import create_client, Client
-import uuid
 import os
 from dotenv import load_dotenv
+from fastapi import HTTPException
+from datetime import timedelta
+
+
+
 from datetime import datetime
 
 load_dotenv()
@@ -29,7 +33,9 @@ async def sync_google_calendar(refresh_token: str, user_id: str):
         print(f"Access token obtained: {access_token}")
 
         # Step 2: Fetch future calendar events
-        events = await fetch_calendar_events(access_token)
+        events, sync_token = await sync_google_calendar_events(access_token)
+        if sync_token:
+            supabase.table("integrations").update({"google_sync_token": sync_token}).eq("user_id", user_id).execute()
         if events is None:
             raise Exception("Failed to fetch calendar events: No response from server")
         elif not events:
@@ -42,8 +48,11 @@ async def sync_google_calendar(refresh_token: str, user_id: str):
             print(f"Found {len(meet_events)} events with valid meeting links")
 
             # Step 4: Set up subscriptions for changes in events
-            await setup_event_subscriptions(access_token, user_id)
-            print("Event subscriptions set up")
+            try:
+                await setup_event_subscriptions(access_token, user_id)
+                print("Event subscriptions set up")
+            except Exception as e:
+                print(f"Failed to set up event subscription, but continuing: {e}")
 
             # Step 5: Push events to Supabase
             for event in meet_events:
@@ -96,9 +105,56 @@ async def fetch_calendar_events(access_token: str) -> list:
             response_data = await response.json()
             return response_data.get("items", [])
 
+async def sync_google_calendar_events(access_token: str, sync_token: str = None):
+    print("Starting Google Calendar sync")
+    url = "https://www.googleapis.com/calendar/v3/calendars/primary/events"
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    params = {
+        "maxResults": 2500  # Adjust as needed
+    }
+    
+    if sync_token:
+        print("Performing incremental sync.")
+        params["syncToken"] = sync_token
+    else:
+        print("Performing full sync from today into the future.")
+        today = datetime.utcnow().isoformat() + 'Z'
+        params["timeMin"] = today
+
+    page_token = None
+    events = []
+    while True:
+        if page_token:
+            params["pageToken"] = page_token
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers, params=params) as response:
+                if response.status == 410:
+                    # Sync token is invalid, perform a full sync
+                    print("Invalid sync token, clearing event store and re-syncing.")
+                    return await sync_google_calendar_events(access_token)
+                elif response.status != 200:
+                    error_message = await response.text()
+                    print(f"Failed to sync events, response status: {response.status}, error: {error_message}")
+                    raise Exception(f"Failed to sync events: {error_message}")
+
+                response_data = await response.json()
+                events.extend(response_data.get("items", []))
+                page_token = response_data.get("nextPageToken")
+                if not page_token:
+                    break
+
+    # Store the sync token from the last request to be used during the next execution.
+    new_sync_token = response_data.get("nextSyncToken")
+    print("Sync complete.")
+    return events, new_sync_token
+
+
 async def setup_event_subscriptions(access_token: str, user_id: str):
     print("Setting up event subscriptions")
-    unique_channel_id = f"channel-{user_id}-{uuid.uuid4()}"  # Generate a unique channel ID
+    unique_channel_id = user_id  # Use user_id as the channel ID
     url = "https://www.googleapis.com/calendar/v3/calendars/primary/events/watch"
     headers = {
         "Authorization": f"Bearer {access_token}",
@@ -107,7 +163,7 @@ async def setup_event_subscriptions(access_token: str, user_id: str):
     data = {
         "id": unique_channel_id,
         "type": "web_hook",
-        "address": "https://b2ce-2601-644-8000-5020-ac92-7955-944b-c447.ngrok-free.app/gcal/notifications"
+        "address": "https://b2ce-2601-644-8000-5020-ac92-7955-944b-c447.ngrok-free.app/gcal-notifications"
     }
     async with aiohttp.ClientSession() as session:
         async with session.post(url, headers=headers, json=data) as response:
