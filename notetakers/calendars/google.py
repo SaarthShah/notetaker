@@ -57,7 +57,7 @@ async def sync_google_calendar(refresh_token: str, user_id: str):
                     "link": event.get('hangoutLink', event.get('location', '')),
                     "attendees": json.dumps([attendee['email'] for attendee in event.get('attendees', [])]),
                 }
-                supabase.table("calevents").insert(event_data).execute()
+                supabase.table("calevents").upsert(event_data, on_conflict=["event_id"]).execute()
             print('pushed all to supabase')
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -107,7 +107,7 @@ async def setup_event_subscriptions(access_token: str, user_id: str):
     data = {
         "id": unique_channel_id,
         "type": "web_hook",
-        "address": "https://c0af-2601-644-8000-5020-ac92-7955-944b-c447.ngrok-free.app/gcal/notifications"
+        "address": "https://b2ce-2601-644-8000-5020-ac92-7955-944b-c447.ngrok-free.app/gcal/notifications"
     }
     async with aiohttp.ClientSession() as session:
         async with session.post(url, headers=headers, json=data) as response:

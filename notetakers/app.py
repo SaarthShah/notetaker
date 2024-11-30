@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 import uvicorn
 from datetime import datetime
@@ -6,12 +6,11 @@ from google_meet.gmeet import join_meet
 from agent.cleanup import clean_google_meet_transcript
 from agent.summarizer import summarize_transcript
 from supabase import create_client, Client
-import aiohttp
 
 import os
 import json
 from dotenv import load_dotenv
-from flask import request, jsonify
+from fastapi.responses import JSONResponse
 
 load_dotenv()
 
@@ -67,110 +66,50 @@ async def join_meet_endpoint(request: MeetRequest):
     
     return {"summary": summary, "cleaned_transcript": cleaned_transcript}
 
-async def sync_google_calendar(refresh_token: str, user_id: str):
-    # Step 1: Use the refresh token to get a new access token
-    access_token = await get_access_token_from_refresh_token(refresh_token)
+@app.post('/gcal/notifications')
+async def handle_notification(request: Request):
+    try:
+        # Extract the notification data from the request
+        notification_data = await request.json()
+        print("Received notification:", notification_data)
 
-    # Step 2: Fetch all calendar events
-    events = await fetch_calendar_events(access_token)
+        # Always create a new txt file for the notification data
+        with open("notification_data.txt", "w") as file:
+            file.write(json.dumps(notification_data) + "\n")
 
-    # Step 3: Filter events with Google Meet links
-    meet_events = [event for event in events if 'hangoutLink' in event]
+        # Check the type of change (add, update, delete)
+        event_id = notification_data.get('id')
+        event_status = notification_data.get('status')
+        event_summary = notification_data.get('summary', '')
+        event_description = notification_data.get('description', '')
+        event_start = notification_data.get('start', {}).get('dateTime')
+        event_end = notification_data.get('end', {}).get('dateTime')
+        event_link = notification_data.get('hangoutLink', '')
+        event_attendees = json.dumps([attendee['email'] for attendee in notification_data.get('attendees', [])])
 
-    # Step 4: Set up subscriptions for changes in events
-    await setup_event_subscriptions(access_token, user_id)
+        if not event_id or not event_status:
+            raise HTTPException(status_code=400, detail="Event ID and status are required")
 
-    # Step 5: Push events to Supabase
-    for event in meet_events:
-        event_data = {
-            "user_id": user_id,
-            "event_id": event['id'],
-            "summary": event.get('summary', ''),
-            "description": event.get('description', ''),
-            "start_time": event['start']['dateTime'],
-            "end_time": event['end']['dateTime'],
-            "meet_link": event['hangoutLink'],
-            "attendees": json.dumps([attendee['email'] for attendee in event.get('attendees', [])]),
-        }
-        response = supabase.table("calendar_events").insert(event_data).execute()
-        print(response)
+        if event_status == 'confirmed':
+            # Add or update the event in the database
+            response = supabase.table("calevents").upsert({
+                "event_id": event_id,
+                "summary": event_summary,
+                "description": event_description,
+                "start_time": event_start,
+                "end_time": event_end,
+                "link": event_link,
+                "attendees": event_attendees
+            }, on_conflict=["event_id"]).execute()
+            print(f"Event {event_id} added/updated in the database.")
+        elif event_status == 'cancelled':
+            # Delete the event from the database
+            response = supabase.table("calevents").delete().eq("event_id", event_id).execute()
+            print(f"Event {event_id} deleted from the database.")
 
-async def get_access_token_from_refresh_token(refresh_token: str) -> str:
-    url = "https://oauth2.googleapis.com/token"
-    headers = {
-        "Content-Type": "application/x-www-form-urlencoded"
-    }
-    data = {
-        "client_id": "YOUR_CLIENT_ID",
-        "client_secret": "YOUR_CLIENT_SECRET",
-        "refresh_token": refresh_token,
-        "grant_type": "refresh_token"
-    }
-    async with aiohttp.ClientSession() as session:
-        async with session.post(url, headers=headers, data=data) as response:
-            response_data = await response.json()
-            return response_data.get("access_token")
-
-async def fetch_calendar_events(access_token: str) -> list:
-    url = "https://www.googleapis.com/calendar/v3/calendars/primary/events"
-    headers = {
-        "Authorization": f"Bearer {access_token}"
-    }
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
-            response_data = await response.json()
-            return response_data.get("items", [])
-
-async def setup_event_subscriptions(access_token: str, user_id: str):
-    url = "https://www.googleapis.com/calendar/v3/calendars/primary/events/watch"
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "id": f"channel-{user_id}",
-        "type": "web_hook",
-        "address": "https://yourdomain.com/notifications"
-    }
-    async with aiohttp.ClientSession() as session:
-        async with session.post(url, headers=headers, json=data) as response:
-            if response.status != 200:
-                raise Exception("Failed to set up event subscription")
-
-@app.route('/gcal/notifications', methods=['POST'])
-def handle_notification():
-    # Extract the notification data from the request
-    notification_data = request.json
-    print("Received notification:", notification_data)
-
-    # Check the type of change (add, update, delete)
-    event_id = notification_data.get('id')
-    event_status = notification_data.get('status')
-    event_summary = notification_data.get('summary', '')
-    event_description = notification_data.get('description', '')
-    event_start = notification_data.get('start', {}).get('dateTime')
-    event_end = notification_data.get('end', {}).get('dateTime')
-    event_link = notification_data.get('hangoutLink', '')
-    event_attendees = json.dumps([attendee['email'] for attendee in notification_data.get('attendees', [])])
-
-    if event_status == 'confirmed':
-        # Add or update the event in the database
-        response = supabase.table("calevents").upsert({
-            "event_id": event_id,
-            "summary": event_summary,
-            "description": event_description,
-            "start_time": event_start,
-            "end_time": event_end,
-            "link": event_link,
-            "attendees": event_attendees
-        }).execute()
-        print(f"Event {event_id} added/updated in the database.")
-    elif event_status == 'cancelled':
-        # Delete the event from the database
-        response = supabase.table("calevents").delete().eq("event_id", event_id).execute()
-        print(f"Event {event_id} deleted from the database.")
-
-    return jsonify({"status": "success"}), 200
+        return JSONResponse({"status": "success"}, status_code=200)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON payload")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
