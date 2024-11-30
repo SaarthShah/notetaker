@@ -13,12 +13,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarContextProvider>
       <SidebarProvider>
-      <div style={{ display: "flex" }}>
-        <AppSidebar />
-        <main style={{ flex: 1 }}>
-          {children}
-        </main>
-      </div>
+        <div style={{ display: "flex" }}>
+          <AppSidebar />
+          <main style={{ flex: 1 }}>
+            {children}
+          </main>
+        </div>
       </SidebarProvider>
     </SidebarContextProvider>
   );

@@ -5,6 +5,8 @@ import { useEffect, useState, useContext } from 'react';
 import { createClient } from '@/app/utils/supabase-browser';
 import { SidebarTitleContext } from '@/components/sidebar-context';
 import { Meetings } from './meetings';
+import { CalendarIntegration } from './integrations';
+import { AskAI } from './ask-ai';
 
 export default function DashboardContextComponent() {
   const [user, setUser] = useState<User | null>(null);
@@ -32,11 +34,11 @@ export default function DashboardContextComponent() {
       case 'meetings':
         return <Meetings/>;
       case 'askai':
-        return <p>Ask AI Content</p>;
+        return <AskAI/>;
       case 'integrations':
-        return <p>Integrations Content</p>;
+        return <CalendarIntegration userInfo={user} />;
       default:
-        return <p>Welcome to the Dashboard</p>;
+        return <></>;
     }
   };
 
