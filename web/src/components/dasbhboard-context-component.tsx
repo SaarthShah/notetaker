@@ -43,7 +43,7 @@ export default function DashboardContextComponent() {
   };
 
   return (
-    <div className='py-5'>
+    <div className='p-5'>
       {renderContent()}
     </div>
   );

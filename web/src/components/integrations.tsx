@@ -1,15 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/app/utils/supabase-browser';
 import { User } from './interfaces/user';
-import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Button } from '@/components/ui/button';
 import {
   Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { FaGoogle, FaApple, FaMicrosoft, FaRegCalendarAlt } from 'react-icons/fa';
 
@@ -57,7 +51,16 @@ export function CalendarIntegration({ userInfo }: CalendarIntegrationProps) {
       const params: Record<string, string> = {
         'client_id': YOUR_CLIENT_ID || '',
         'redirect_uri': YOUR_REDIRECT_URI,
-        'scope': 'https://www.googleapis.com/auth/calendar.events.readonly',
+        'scope': [
+          'https://www.googleapis.com/auth/userinfo.email',
+          'https://www.googleapis.com/auth/userinfo.profile',
+          'https://www.googleapis.com/auth/calendar.calendarlist.readonly',
+          'https://www.googleapis.com/auth/calendar.events.public.readonly',
+          'https://www.googleapis.com/auth/calendar.readonly',
+          'https://www.googleapis.com/auth/calendar.calendars.readonly',
+          'https://www.googleapis.com/auth/calendar.events.owned.readonly',
+          'https://www.googleapis.com/auth/calendar.events.readonly'
+        ].join(' '),
         'include_granted_scopes': 'true',
         'response_type': 'code',
         'access_type': 'offline',
@@ -74,7 +77,7 @@ export function CalendarIntegration({ userInfo }: CalendarIntegrationProps) {
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen h-full px-6">
+    <div className="flex flex-col items-center min-h-screen h-full">
       <div className="w-full max-w-6xl mx-auto">
         <div className="text-left mb-8">
           <h1 className="text-2xl font-bold">Integrate Your Calendar</h1>
@@ -94,7 +97,7 @@ export function CalendarIntegration({ userInfo }: CalendarIntegrationProps) {
             <Button
               onClick={handleGoogleCalendarConnect}
               disabled={isConnected}
-              className={isConnected ? 'bg-green-500' : 'bg-blue-500'}
+              className={isConnected ? 'bg-green-500' : 'bg-black'}
             >
               {isConnected ? 'Connected' : 'Connect'}
             </Button>

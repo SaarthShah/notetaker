@@ -28,7 +28,16 @@ export async function GET(request: Request) {
         access_type: 'offline',
         response_type: 'code',
         prompt: 'consent',
-        scope: 'https://www.googleapis.com/auth/calendar.events.readonly',
+        scope: [
+          'https://www.googleapis.com/auth/userinfo.email',
+          'https://www.googleapis.com/auth/userinfo.profile',
+          'https://www.googleapis.com/auth/calendar.calendarlist.readonly',
+          'https://www.googleapis.com/auth/calendar.events.public.readonly',
+          'https://www.googleapis.com/auth/calendar.readonly',
+          'https://www.googleapis.com/auth/calendar.calendars.readonly',
+          'https://www.googleapis.com/auth/calendar.events.owned.readonly',
+          'https://www.googleapis.com/auth/calendar.events.readonly'
+        ].join(' '),
       }).toString(),
     });
 
