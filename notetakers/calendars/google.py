@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from fastapi import HTTPException
 from datetime import timedelta
 import uuid
+from .utils import filter_meeting_events
 
 
 from datetime import datetime
@@ -44,10 +45,11 @@ async def sync_google_calendar(refresh_token: str, user_id: str):
             print(f"Fetched {len(events)} events")
 
             # Step 3: Filter events with valid meeting links
-            meet_events = [event for event in events if 'hangoutLink' in event or 'location' in event and any(url in event['location'] for url in ['meet.google.com', 'zoom.us', 'teams.microsoft.com'])]
+            meet_events = filter_meeting_events(events)
             print(f"Found {len(meet_events)} events with valid meeting links")
 
             # Step 4: Set up subscriptions for changes in events
+            # NOTE: Figure out a way to delete these calendars event handlers once they are created
             try:
                 await setup_event_subscriptions(access_token, user_id)
                 print("Event subscriptions set up")
@@ -178,8 +180,3 @@ async def setup_event_subscriptions(access_token: str, user_id: str):
             else:
                 print("Event subscription created successfully")
                 print(f"New subscription set for channel ID: {unique_channel_id}")
-
-# Commented out the direct call to the async function
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(sync_google_calendar('1//06gVSfDNTDylGCgYIARAAGAYSNwF-L9IrGdh3BgDbd0C0Ysb9A58q5d6FUm9lkhyzWEA0IOyv1DGwoUIiVBmaHwsqa05PFp2q1KE', 'b63143f6-ce59-465f-b166-4fe7139cd381'))

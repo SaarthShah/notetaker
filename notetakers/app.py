@@ -12,6 +12,7 @@ import json
 from dotenv import load_dotenv
 from fastapi.responses import JSONResponse
 from calendars.google import get_access_token_from_refresh_token, sync_google_calendar_events, sync_google_calendar
+from calendars.utils import filter_meeting_events
 
 load_dotenv()
 
@@ -122,7 +123,7 @@ async def handle_notification(request: Request):
         print("Sync completed successfully.")
 
         # Filter events with valid meeting links
-        meet_events = [event for event in events if 'hangoutLink' in event or 'location' in event and any(url in event['location'] for url in ['meet.google.com', 'zoom.us', 'teams.microsoft.com'])]
+        meet_events = filter_meeting_events(events)
         
         # Insert or update meet events in the Supabase database
         for event in meet_events:
