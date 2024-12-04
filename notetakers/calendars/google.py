@@ -3,8 +3,6 @@ import json
 from supabase import create_client, Client
 import os
 from dotenv import load_dotenv
-from fastapi import HTTPException
-from datetime import timedelta
 import uuid
 from .utils import filter_meeting_events
 
