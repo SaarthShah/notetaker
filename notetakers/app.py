@@ -74,6 +74,7 @@ async def handle_notification(request: Request):
         headers = request.headers
         channel_id = headers.get('X-Goog-Channel-ID')
         resource_state = headers.get('X-Goog-Resource-State')
+        user_id = headers.get('X-Goog-Channel-Token')  # Extract user_id from token
 
         print("Received notification headers:", headers)
 
@@ -90,9 +91,13 @@ async def handle_notification(request: Request):
             print("Channel ID is missing.")
             raise HTTPException(status_code=400, detail="Channel ID is required")
 
-        # Fetch the Google refresh token and sync token from the 'integrations' table using the channel_id (user_id)
-        print(f"Fetching Google tokens for user_id: {channel_id}")
-        response = supabase.table("integrations").select("google_token", "google_sync_token").eq("user_id", channel_id).execute()
+        if not user_id:
+            print("User ID is missing in token.")
+            raise HTTPException(status_code=400, detail="User ID is required in token")
+
+        # Fetch the Google refresh token and sync token from the 'integrations' table using the user_id
+        print(f"Fetching Google tokens for user_id: {user_id}")
+        response = supabase.table("integrations").select("google_token", "google_sync_token").eq("user_id", user_id).execute()
         if not response.data:
             print("Google tokens not found for the given user_id.")
             raise HTTPException(status_code=404, detail="Google tokens not found for the given user_id")
@@ -113,7 +118,7 @@ async def handle_notification(request: Request):
         print("Performing sync using the sync token.")
         events, new_sync_token = await sync_google_calendar_events(access_token, sync_token)
         if new_sync_token:
-            supabase.table("integrations").update({"google_sync_token": new_sync_token}).eq("user_id", channel_id).execute()
+            supabase.table("integrations").update({"google_sync_token": new_sync_token}).eq("user_id", user_id).execute()
         print("Sync completed successfully.")
 
         # Filter events with valid meeting links
@@ -122,7 +127,7 @@ async def handle_notification(request: Request):
         # Insert or update meet events in the Supabase database
         for event in meet_events:
             event_data = {
-                "user_id": channel_id,
+                "user_id": user_id,
                 "event_id": event['id'],
                 "summary": event.get('summary', ''),
                 "description": event.get('description', ''),

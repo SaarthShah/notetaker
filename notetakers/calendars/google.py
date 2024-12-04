@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 from fastapi import HTTPException
 from datetime import timedelta
-
+import uuid
 
 
 from datetime import datetime
@@ -112,7 +112,7 @@ async def sync_google_calendar_events(access_token: str, sync_token: str = None)
         "Authorization": f"Bearer {access_token}"
     }
     params = {
-        "maxResults": 2500  # Adjust as needed
+        "maxResults": 10000
     }
     
     if sync_token:
@@ -153,9 +153,9 @@ async def sync_google_calendar_events(access_token: str, sync_token: str = None)
 
 
 async def setup_event_subscriptions(access_token: str, user_id: str):
-    print("Setting up event subscriptions")
-    unique_channel_id = user_id  # Use user_id as the channel ID
-    url = "https://www.googleapis.com/calendar/v3/calendars/primary/events/watch"
+    print("Creating a new event subscription")
+    unique_channel_id = str(uuid.uuid4())  # Generate a unique channel ID
+    watch_url = "https://www.googleapis.com/calendar/v3/calendars/primary/events/watch"
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json"
@@ -163,17 +163,21 @@ async def setup_event_subscriptions(access_token: str, user_id: str):
     data = {
         "id": unique_channel_id,
         "type": "web_hook",
-        "address": "https://b2ce-2601-644-8000-5020-ac92-7955-944b-c447.ngrok-free.app/gcal-notifications"
+        "address": "https://e717-2601-644-4301-d2e0-c53a-5955-c69b-5520.ngrok-free.app/gcal-notifications",
+        "token": user_id  # Store user_id in the token field
     }
+
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, headers=headers, json=data) as response:
+        # Setting up a new event subscription
+        async with session.post(watch_url, headers=headers, json=data) as response:
             response_data = await response.json()
             if response.status != 200:
                 error_message = response_data.get("error", {}).get("message", "Unknown error")
-                print(f"Failed to set up event subscription, response status: {response.status}, error: {error_message}")
-                raise Exception(f"Failed to set up event subscription: {error_message}")
+                print(f"Failed to create event subscription, response status: {response.status}, error: {error_message}")
+                raise Exception(f"Failed to create event subscription: {error_message}")
             else:
-                print("Event subscription set up successfully")
+                print("Event subscription created successfully")
+                print(f"New subscription set for channel ID: {unique_channel_id}")
 
 # Commented out the direct call to the async function
 if __name__ == "__main__":
