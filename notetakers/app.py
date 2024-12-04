@@ -11,7 +11,7 @@ import os
 import json
 from dotenv import load_dotenv
 from fastapi.responses import JSONResponse
-from calendars.google import get_access_token_from_refresh_token, sync_google_calendar_events
+from calendars.google import get_access_token_from_refresh_token, sync_google_calendar_events, sync_google_calendar
 
 load_dotenv()
 
@@ -158,6 +158,33 @@ async def handle_notification(request: Request):
         except Exception as e:
             print(f"Request Body: Unable to read body, error: {e}")
         raise HTTPException(status_code=400, detail="Invalid request")
+
+@app.post("/sync-calendar")
+async def sync_calendar(request: Request):
+    try:
+        data = await request.json()
+        user_id = data.get("user_id")
+
+        if not user_id:
+            raise HTTPException(status_code=400, detail="Missing user_id")
+
+        # Fetch the Google refresh token from the 'integrations' table using the user_id
+        response = supabase.table("integrations").select("google_token").eq("user_id", user_id).execute()
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Google token not found for the given user_id")
+
+        google_refresh_token = response.data[0]['google_token']['refresh_token']
+
+        # Call the sync_google_calendar function
+        await sync_google_calendar(google_refresh_token, user_id)
+
+        return JSONResponse({"status": "success"}, status_code=200)
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return JSONResponse({"status": "error", "detail": str(e)}, status_code=400)
+
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

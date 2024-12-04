@@ -164,7 +164,7 @@ async def setup_event_subscriptions(access_token: str, user_id: str):
         "id": unique_channel_id,
         "type": "web_hook",
         "address": "https://e717-2601-644-4301-d2e0-c53a-5955-c69b-5520.ngrok-free.app/gcal-notifications",
-        "token": user_id  # Store user_id in the token field
+        "token": user_id
     }
 
     async with aiohttp.ClientSession() as session:
