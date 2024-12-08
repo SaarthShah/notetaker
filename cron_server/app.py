@@ -15,12 +15,19 @@ jobstores = {
 scheduler = BackgroundScheduler(jobstores=jobstores)
 scheduler.start()
 
-def execute_task(link, headers, body):
+def execute_task(task_id, link, headers, body):
     try:
         response = requests.post(link, headers=headers, json=body)
         print(f"Executed task with response: {response.status_code} - {response.text}")
     except Exception as e:
         print(f"Error executing task: {e}")
+    finally:
+        # Remove the task from the scheduler after execution
+        try:
+            scheduler.remove_job(task_id)
+            print(f"Task {task_id} deleted from scheduler after execution.")
+        except Exception as e:
+            print(f"Error deleting task {task_id}: {e}")
 
 @app.post('/schedule-task')
 async def schedule_task(request: Request):
@@ -42,7 +49,7 @@ async def schedule_task(request: Request):
         raise HTTPException(status_code=400, detail="Invalid run_time format. Use 'YYYY-MM-DD HH:MM:SS'")
 
     # Schedule the task
-    scheduler.add_job(execute_task, 'date', run_date=run_time, args=[link, headers, body], id=task_id)
+    scheduler.add_job(execute_task, 'date', run_date=run_time, args=[task_id, link, headers, body], id=task_id)
     return {"status": "Task scheduled", "task_id": task_id}
 
 @app.delete('/delete-task')
