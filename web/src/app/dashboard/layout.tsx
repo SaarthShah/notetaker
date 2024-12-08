@@ -3,6 +3,7 @@ import "@/app/globals.css";
 import { SidebarContextProvider } from "@/components/sidebar-context";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { NextUIProvider } from "@nextui-org/react";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -11,15 +12,17 @@ export const metadata: Metadata = {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarContextProvider>
-      <SidebarProvider>
-        <div style={{ display: "flex" }}>
-          <AppSidebar />
-          <main style={{ flex: 1 }}>
-            {children}
-          </main>
-        </div>
-      </SidebarProvider>
-    </SidebarContextProvider>
+    <NextUIProvider>
+      <SidebarContextProvider>
+        <SidebarProvider>
+          <div style={{ display: "flex" }}>
+            <AppSidebar />
+            <main style={{ flex: 1 }}>
+              {children}
+            </main>
+          </div>
+        </SidebarProvider>
+      </SidebarContextProvider>
+    </NextUIProvider>
   );
 }
