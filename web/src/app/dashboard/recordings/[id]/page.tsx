@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import { CallDetails } from '@/components/interfaces/call-details'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,19 +9,39 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { createClient } from '@/app/utils/supabase-browser';
+import { FaGoogle, FaMicrosoft, FaVideo } from "react-icons/fa";
 
-const meetingTypeIcons = {
-  gmeet: '🌐',
-  google: '🌐',
-  zoom: '🔵',
-  teams: '👥'
-}
+const getMeetingTypeWithIcon = (type: string) => {
+  switch (type) {
+    case "gmeet":
+      return (
+        <span className="flex items-center">
+          <FaGoogle className="mr-2 align-middle" /> <span className="align-middle">Google Meet</span>
+        </span>
+      );
+    case "zoom":
+      return (
+        <span className="flex items-center">
+          <FaVideo className="mr-2 align-middle" /> <span className="align-middle">Zoom</span>
+        </span>
+      );
+    case "teams":
+      return (
+        <span className="flex items-center">
+          <FaMicrosoft className="mr-2 align-middle" /> <span className="align-middle">Microsoft Teams</span>
+        </span>
+      );
+    default:
+      return type;
+  }
+};
 
 export default function CallDetailsPage() {
   const [callDetails, setCallDetails] = useState<CallDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
   const id = window.location.pathname.split('/').pop();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchCallDetails = async () => {
@@ -67,6 +88,7 @@ export default function CallDetailsPage() {
   return (
     <div className='flex w-full'>
       <div className="container mx-auto p-4">
+        <button onClick={() => router.back()} className="mb-4 text-blue-500 hover:underline">Back</button>
         <h1 className="text-2xl font-bold mb-4">Call Details</h1>
         
         <Card className="mb-6">
@@ -82,7 +104,7 @@ export default function CallDetailsPage() {
             <div className="flex items-center mt-2">
               <strong>Meeting Type:</strong> 
               <Badge variant="outline" className="ml-2">
-                {meetingTypeIcons[callDetails.type]} {callDetails.type.charAt(0).toUpperCase() + callDetails.type.slice(1)}
+                {getMeetingTypeWithIcon(callDetails.type)}
               </Badge>
             </div>
             <p className="mt-2"><strong>Meeting Link:</strong> <a href={callDetails.meeting_link} className="text-blue-500 hover:underline">{callDetails.meeting_link}</a></p>
