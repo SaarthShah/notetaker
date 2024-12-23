@@ -15,6 +15,7 @@ import { ChevronRight, RefreshCw } from "lucide-react";
 import { SidebarTitleContext } from "@/components/sidebar-context";
 import { createClient } from "@/app/utils/supabase-browser";
 import { FaGoogle, FaMicrosoft, FaVideo } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 
 type Meeting = {
   id: number;
@@ -36,6 +37,7 @@ export function Meetings() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const sidebarContext = useContext(SidebarTitleContext);
+  const router = useRouter();
 
   const fetchMeetings = async () => {
     try {
@@ -48,7 +50,16 @@ export function Meetings() {
       }
 
       const supabase = await createClient();
-      const { data, error } = await supabase.from("meetings").select("*");
+      const user = await supabase.auth.getUser();
+
+      if (!user.data?.user) {
+        throw new Error("User not authenticated");
+      }
+
+      const { data, error } = await supabase
+        .from("meetings")
+        .select("*")
+        .eq("user_id", user.data.user.id);
 
       if (error) {
         throw new Error("Error fetching meetings from Supabase");
@@ -167,6 +178,7 @@ export function Meetings() {
                   <TableRow
                     key={meeting.id}
                     className="cursor-pointer hover:bg-muted"
+                    onClick={() => router.push(`/dashboard/recordings/${meeting.id}`)}
                   >
                     <TableCell>
                       {new Date(meeting.created_at).toLocaleDateString("en-US", {
