@@ -1,11 +1,11 @@
-import requests
+import aiohttp
 from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-def upsert_cron_job(task_id, run_time, link, headers, body):
+async def upsert_cron_job(task_id, run_time, link, headers, body):
     """
     Schedules or updates a cron job with the given task details.
 
@@ -45,18 +45,19 @@ def upsert_cron_job(task_id, run_time, link, headers, body):
         raise ValueError("CRON_URL environment variable is not set")
 
     # Schedule the task
-    response = requests.post(f"{cron_url}/schedule-task", json=task_data)
-    print(task_data, response)
+    async with aiohttp.ClientSession() as session:
+        async with session.post(f"{cron_url}/schedule-task", json=task_data) as response:
+            print(task_data, response)
 
-    # Check if the request was successful
-    if response.status_code != 200:
-        raise Exception(f"Failed to schedule task: {response.status_code} - {response.text}")
+            # Check if the request was successful
+            if response.status != 200:
+                raise Exception(f"Failed to schedule task: {response.status} - {await response.text()}")
 
-    # Print the response
-    print(response.json())
+            # Print the response
+            print(await response.json())
 
 
-def delete_cron_job(task_id):
+async def delete_cron_job(task_id):
     """
     Deletes a cron job with the given task ID.
 
@@ -77,11 +78,12 @@ def delete_cron_job(task_id):
         raise ValueError("CRON_URL environment variable is not set")
 
     # Send a request to delete the task
-    response = requests.delete(f"{cron_url}/delete-task", params={"task_id": task_id})
+    async with aiohttp.ClientSession() as session:
+        async with session.delete(f"{cron_url}/delete-task", params={"task_id": task_id}) as response:
 
-    # Check if the request was successful
-    if response.status_code != 200:
-        raise Exception(f"Failed to delete task: {response.status_code} - {response.text}")
+            # Check if the request was successful
+            if response.status != 200:
+                raise Exception(f"Failed to delete task: {response.status} - {await response.text()}")
 
-    # Print the response
-    print(response.json())
+            # Print the response
+            print(await response.json())

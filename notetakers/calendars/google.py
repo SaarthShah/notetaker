@@ -67,7 +67,7 @@ async def sync_google_calendar(refresh_token: str, user_id: str):
                     "attendees": json.dumps([attendee['email'] for attendee in event.get('attendees', [])]),
                 }
                 supabase.table("calevents").upsert(event_data, on_conflict=["event_id"]).execute()
-                upsert_cron_job(
+                await upsert_cron_job(
                     task_id=event['id'],
                     run_time=event['start']['dateTime'],
                     link=os.get_env("SEVER_ENDPOINT")+"/join-meet",

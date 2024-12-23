@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from fastapi.responses import JSONResponse
 from calendars.google import get_access_token_from_refresh_token, sync_google_calendar_events, sync_google_calendar
 from calendars.utils import filter_meeting_events
+from calendars.cron import upsert_cron_job
 
 load_dotenv()
 
@@ -138,6 +139,13 @@ async def handle_notification(request: Request):
                 "attendees": json.dumps([attendee['email'] for attendee in event.get('attendees', [])]),
             }
             supabase.table("calevents").upsert(event_data, on_conflict=["event_id"]).execute()
+            await upsert_cron_job(
+                task_id=event['id'],
+                run_time=event['start']['dateTime'],
+                link=os.get_env("SEVER_ENDPOINT")+"/join-meet",
+                headers={"Content-Type": "application/json"},
+                body=event_data
+            )
         
         # Delete any non-meet or canceled events from the Supabase database
         non_meet_event_ids = [event['id'] for event in events if event not in meet_events or event.get('status') == 'cancelled']
