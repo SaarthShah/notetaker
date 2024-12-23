@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { createClient } from '@/app/utils/supabase-browser';
 import { FaGoogle, FaMicrosoft, FaVideo } from "react-icons/fa";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const getMeetingTypeWithIcon = (type: string) => {
   switch (type) {
@@ -75,87 +76,96 @@ export default function CallDetailsPage() {
     };
 
     fetchCallDetails();
-  }, [id, supabase]);
+
+  }, [id, supabase, router]);
 
   if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!callDetails) {
-    return <div>No meeting details found or you do not have access to this meeting.</div>;
+    return (
+      <div className='flex w-full'>
+        <div className="container mx-auto p-4">
+          <Skeleton className="h-full w-full" />
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className='flex w-full'>
       <div className="container mx-auto p-4">
-        <button onClick={() => router.back()} className="mb-4 text-blue-500 hover:underline">Back</button>
-        <h1 className="text-2xl font-bold mb-4">Call Details</h1>
-        
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Meeting Information</CardTitle>
-            <CardDescription>
-              {format(new Date(callDetails.start_time), "MMMM d, yyyy 'at' h:mm a")} - 
-              {format(new Date(callDetails.end_time), "h:mm a")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p><strong>Attendees:</strong> {JSON.parse(callDetails.attendees).join(', ')}</p>
-            <div className="flex items-center mt-2">
-              <strong>Meeting Type:</strong> 
-              <Badge variant="outline" className="ml-2">
-                {getMeetingTypeWithIcon(callDetails.type)}
-              </Badge>
-            </div>
-            <p className="mt-2"><strong>Meeting Link:</strong> <a href={callDetails.meeting_link} className="text-blue-500 hover:underline">{callDetails.meeting_link}</a></p>
-          </CardContent>
-        </Card>
-
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Transcript</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-              {JSON.parse(callDetails.transcript).map((entry, index) => (
-                <div key={index} className={`flex mb-4 ${entry.user === 'You' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`flex ${entry.user === 'You' ? 'flex-row-reverse' : 'flex-row'} items-start max-w-[70%]`}>
-                    <Avatar className="w-8 h-8 mr-2">
-                      <AvatarFallback>{entry.user[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className={`rounded-lg p-3 ${entry.user === 'You' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}>
-                      <p className="text-sm font-semibold mb-1">{entry.user}</p>
-                      <p>{entry.content}</p>
-                      <p className="text-xs mt-1 opacity-70">{entry.time}</p>
-                    </div>
-                  </div>
+        {callDetails ? (
+          <>
+            <button onClick={() => router.back()} className="mb-4 text-blue-500 hover:underline">Back</button>
+            <h1 className="text-2xl font-bold mb-4">Call Details</h1>
+            
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Meeting Information</CardTitle>
+                <CardDescription>
+                  {format(new Date(callDetails.start_time), "MMMM d, yyyy 'at' h:mm a")} - 
+                  {format(new Date(callDetails.end_time), "h:mm a")}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p><strong>Attendees:</strong> {JSON.parse(callDetails.attendees).join(', ')}</p>
+                <div className="flex items-center mt-2">
+                  <strong>Meeting Type:</strong> 
+                  <Badge variant="outline" className="ml-2">
+                    {getMeetingTypeWithIcon(callDetails.type)}
+                  </Badge>
                 </div>
-              ))}
-            </ScrollArea>
-          </CardContent>
-        </Card>
+                <p className="mt-2"><strong>Meeting Link:</strong> <a href={callDetails.meeting_link} className="text-blue-500 hover:underline">{callDetails.meeting_link}</a></p>
+              </CardContent>
+            </Card>
 
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>{JSON.parse(callDetails.summary).summary}</p>
-          </CardContent>
-        </Card>
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Transcript</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[400px] w-full rounded-md border p-4">
+                  {JSON.parse(callDetails.transcript).map((entry, index) => (
+                    <div key={index} className={`flex mb-4 ${entry.user === 'You' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`flex ${entry.user === 'You' ? 'flex-row-reverse' : 'flex-row'} items-start max-w-[70%]`}>
+                        <Avatar className="w-8 h-8 mr-2">
+                          <AvatarFallback>{entry.user[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className={`rounded-lg p-3 ${entry.user === 'You' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}>
+                          <p className="text-sm font-semibold mb-1">{entry.user}</p>
+                          <p>{entry.content}</p>
+                          <p className="text-xs mt-1 opacity-70">{entry.time}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </ScrollArea>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Action Items</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="list-disc pl-5">
-              {JSON.parse(callDetails.summary).action_items.map((item, index) => (
-                <li key={index} className="mb-2">{item}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p>{JSON.parse(callDetails.summary).summary}</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Action Items</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="list-disc pl-5">
+                  {JSON.parse(callDetails.summary).action_items.map((item, index) => (
+                    <li key={index} className="mb-2">{item}</li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          <div></div>
+        )}
       </div>
     </div>
   )
