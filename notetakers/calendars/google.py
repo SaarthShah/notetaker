@@ -4,7 +4,7 @@ from supabase import create_client, Client
 import os
 from dotenv import load_dotenv
 import uuid
-from .utils import filter_meeting_events
+from notetakers.utils import filter_meeting_events
 
 
 from datetime import datetime
