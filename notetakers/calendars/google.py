@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 import uuid
 from .utils import filter_meeting_events
+from .cron import upsert_cron_job
 
 from datetime import datetime
 
@@ -66,6 +67,13 @@ async def sync_google_calendar(refresh_token: str, user_id: str):
                     "attendees": json.dumps([attendee['email'] for attendee in event.get('attendees', [])]),
                 }
                 supabase.table("calevents").upsert(event_data, on_conflict=["event_id"]).execute()
+                upsert_cron_job(
+                    task_id=event['id'],
+                    run_time=event['start']['dateTime'],
+                    link=os.get_env("SEVER_ENDPOINT")+"/join-meet",
+                    headers={"Content-Type": "application/json"},
+                    body=event_data
+                )
             print('pushed all to supabase')
     except Exception as e:
         print(f"An error occurred: {e}")
