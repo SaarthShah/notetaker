@@ -53,10 +53,12 @@ async def schedule_task(request: Request):
     if existing_job:
         # Update the existing task
         scheduler.modify_job(task_id, run_date=run_time, args=[task_id, link, headers, body])
+        print(f"Task {task_id} updated with details: run_time={run_time}, link={link}, headers={headers}, body={body}")
         return {"status": "Task updated", "task_id": task_id}
 
     # Schedule the task
     scheduler.add_job(execute_task, 'date', run_date=run_time, args=[task_id, link, headers, body], id=task_id)
+    print(f"Task {task_id} scheduled with details: run_time={run_time}, link={link}, headers={headers}, body={body}")
     return {"status": "Task scheduled", "task_id": task_id}
 
 @app.delete('/delete-task')
