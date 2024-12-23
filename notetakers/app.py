@@ -79,12 +79,12 @@ async def handle_notification(request: Request):
 
         print("Received notification headers:", headers)
 
-        # Always create a new txt file for the notification headers
-        with open("notification_headers.txt", "w") as file:
-            file.write(json.dumps(dict(headers)) + "\n")
-        print("Notification headers written to file.")
+        # # Always create a new txt file for the notification headers
+        # with open("notification_headers.txt", "w") as file:
+        #     file.write(json.dumps(dict(headers)) + "\n")
+        # print("Notification headers written to file.")
 
-        if resource_state != 'exists':
+        if resource_state not in ['exists', 'sync']:
             print("Resource state is not 'exists'.")
             raise HTTPException(status_code=400, detail="Resource state is not 'exists'")
 

@@ -46,6 +46,7 @@ def upsert_cron_job(task_id, run_time, link, headers, body):
 
     # Schedule the task
     response = requests.post(f"{cron_url}/schedule-task", json=task_data)
+    print(task_data, response)
 
     # Check if the request was successful
     if response.status_code != 200:
