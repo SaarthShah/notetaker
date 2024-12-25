@@ -2,8 +2,10 @@ import aiohttp
 from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
+from dateutil import parser
+import pytz
 
-load_dotenv()
+load_dotenv(dotenv_path='@.env')
 
 async def upsert_cron_job(task_id, run_time, link, headers, body):
     """
@@ -13,7 +15,7 @@ async def upsert_cron_job(task_id, run_time, link, headers, body):
 
     Args:
         task_id (str): Unique identifier for the task.
-        run_time (str): The time at which the task should be executed, in 'YYYY-MM-DD HH:MM:SS' format.
+        run_time (str): The time at which the task should be executed, in ISO 8601 format.
         link (str): The URL to which the task will send a POST request.
         headers (dict): HTTP headers to include in the POST request.
         body (dict): JSON body to include in the POST request.
@@ -26,8 +28,19 @@ async def upsert_cron_job(task_id, run_time, link, headers, body):
         None
     """
     # Calculate the run time 5 minutes from now if not provided
+    print(run_time)
     if not run_time:
         run_time = (datetime.utcnow() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        # Attempt to parse the run_time and convert to UTC format
+        try:
+            # Parse the run_time using dateutil.parser
+            parsed_time = parser.isoparse(run_time)
+            # Convert to UTC
+            run_time_utc = parsed_time.astimezone(pytz.utc)
+            run_time = run_time_utc.strftime('%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            raise ValueError("Invalid run_time format. Expected ISO 8601 format.")
 
     # Define the task details
     task_data = {
@@ -39,7 +52,7 @@ async def upsert_cron_job(task_id, run_time, link, headers, body):
     }
 
     # Get the CRON_URL from environment variables
-    cron_url = os.getenv("CRON_URL")
+    cron_url = os.environ.get("CRON_URL")
 
     if not cron_url:
         raise ValueError("CRON_URL environment variable is not set")
@@ -47,11 +60,10 @@ async def upsert_cron_job(task_id, run_time, link, headers, body):
     # Schedule the task
     async with aiohttp.ClientSession() as session:
         async with session.post(f"{cron_url}/schedule-task", json=task_data) as response:
-            print(task_data, response)
-
             # Check if the request was successful
             if response.status != 200:
-                raise Exception(f"Failed to schedule task: {response.status} - {await response.text()}")
+                error_detail = await response.text()
+                raise Exception(f"Failed to schedule task: {response.status} - {error_detail}")
 
             # Print the response
             print(await response.json())
@@ -72,7 +84,7 @@ async def delete_cron_job(task_id):
         None
     """
     # Get the CRON_URL from environment variables
-    cron_url = os.getenv("CRON_URL")
+    cron_url = os.environ.get("CRON_URL")
 
     if not cron_url:
         raise ValueError("CRON_URL environment variable is not set")
@@ -80,10 +92,10 @@ async def delete_cron_job(task_id):
     # Send a request to delete the task
     async with aiohttp.ClientSession() as session:
         async with session.delete(f"{cron_url}/delete-task", params={"task_id": task_id}) as response:
-
             # Check if the request was successful
             if response.status != 200:
-                raise Exception(f"Failed to delete task: {response.status} - {await response.text()}")
+                error_detail = await response.text()
+                raise Exception(f"Failed to delete task: {response.status} - {error_detail}")
 
             # Print the response
             print(await response.json())

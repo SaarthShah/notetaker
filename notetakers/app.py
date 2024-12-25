@@ -78,8 +78,6 @@ async def handle_notification(request: Request):
         resource_state = headers.get('X-Goog-Resource-State')
         user_id = headers.get('X-Goog-Channel-Token')  # Extract user_id from token
 
-        print("Received notification headers:", headers)
-
         # # Always create a new txt file for the notification headers
         # with open("notification_headers.txt", "w") as file:
         #     file.write(json.dumps(dict(headers)) + "\n")
@@ -123,8 +121,12 @@ async def handle_notification(request: Request):
             supabase.table("integrations").update({"google_sync_token": new_sync_token}).eq("user_id", user_id).execute()
         print("Sync completed successfully.")
 
+        print(events)
+
         # Filter events with valid meeting links
         meet_events = filter_meeting_events(events)
+
+        print(meet_events)
         
         # Insert or update meet events in the Supabase database
         for event in meet_events:
@@ -138,15 +140,20 @@ async def handle_notification(request: Request):
                 "link": event.get('hangoutLink', event.get('location', '')),
                 "attendees": json.dumps([attendee['email'] for attendee in event.get('attendees', [])]),
             }
-            supabase.table("calevents").upsert(event_data, on_conflict=["event_id"]).execute()
+            res,error = supabase.table("calevents").upsert(event_data, on_conflict=["event_id"]).execute()
+            print(res, error)
+            print('upserting cron')
             await upsert_cron_job(
                 task_id=event['id'],
                 run_time=event['start']['dateTime'],
-                link=os.get_env("SEVER_ENDPOINT")+"/join-meet",
+                link=os.getenv("SERVER_ENDPOINT")+"/join-meet",
                 headers={"Content-Type": "application/json"},
-                body=event_data
+                body={
+                    "meet_link": event.get('hangoutLink', event.get('location', '')),
+                    "end_time": event['end']['dateTime'],
+                    "user_id": user_id
+                }
             )
-        
         # Delete any non-meet or canceled events from the Supabase database
         non_meet_event_ids = [event['id'] for event in events if event not in meet_events or event.get('status') == 'cancelled']
         if non_meet_event_ids:

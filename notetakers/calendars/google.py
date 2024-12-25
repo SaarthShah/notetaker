@@ -9,7 +9,7 @@ from .cron import upsert_cron_job
 
 from datetime import datetime
 
-load_dotenv()
+load_dotenv(dotenv_path='@.env')
 
 # Initialize Supabase client
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -70,9 +70,13 @@ async def sync_google_calendar(refresh_token: str, user_id: str):
                 await upsert_cron_job(
                     task_id=event['id'],
                     run_time=event['start']['dateTime'],
-                    link=os.get_env("SEVER_ENDPOINT")+"/join-meet",
+                    link=os.getenv("SERVER_ENDPOINT")+"/join-meet",
                     headers={"Content-Type": "application/json"},
-                    body=event_data
+                    body={
+                    "meet_link": event.get('hangoutLink', event.get('location', '')),
+                    "end_time": event['end']['dateTime'],
+                    "user_id": user_id
+                    }
                 )
             print('pushed all to supabase')
     except Exception as e:
@@ -170,7 +174,7 @@ async def setup_event_subscriptions(access_token: str, user_id: str):
     data = {
         "id": unique_channel_id,
         "type": "web_hook",
-        "address": "https://e717-2601-644-4301-d2e0-c53a-5955-c69b-5520.ngrok-free.app/gcal-notifications",
+        "address": os.getenv('SERVER_ENDPOINT') + "/gcal-notifications",
         "token": user_id
     }
 
