@@ -4,9 +4,9 @@ from supabase import create_client, Client
 import os
 from dotenv import load_dotenv
 import uuid
-from .utils import filter_meeting_events
+from .utils import filter_meeting_events, get_meeting_link
 from .cron import upsert_cron_job
-
+from dateutil import parser
 from datetime import datetime
 
 load_dotenv(dotenv_path='@.env')
@@ -73,8 +73,8 @@ async def sync_google_calendar(refresh_token: str, user_id: str):
                     link=os.getenv("SERVER_ENDPOINT")+"/join-meet",
                     headers={"Content-Type": "application/json"},
                     body={
-                    "meet_link": event.get('hangoutLink', event.get('location', '')),
-                    "end_time": event['end']['dateTime'],
+                    "meet_link": get_meeting_link(event),
+                    "end_time": int((parser.isoparse(event['end']['dateTime']) - parser.isoparse(event['start']['dateTime'])).total_seconds() / 60),
                     "user_id": user_id
                     }
                 )
