@@ -18,19 +18,6 @@ import { createClient } from "@/app/utils/supabase-browser";
 import { FaGoogle, FaMicrosoft, FaVideo } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 
-type Meeting = {
-  id: number;
-  created_at: string;
-  user_id: string;
-  transcript: Record<string, any>;
-  start_time: string;
-  end_time: string;
-  attendees: string;
-  summary: Record<string, any>;
-  meeting_link: string;
-  type: string;
-};
-
 const ITEMS_PER_PAGE = 10;
 
 const fetcher = async () => {
@@ -68,7 +55,10 @@ export function Meetings() {
   if (error) return <div>Error loading meetings</div>;
   if (!meetings) return <div>Loading...</div>;
 
-  const paginatedData = meetings.slice(
+  // Sort meetings by start_time in descending order
+  const sortedMeetings = [...meetings].sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
+
+  const paginatedData = sortedMeetings.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
