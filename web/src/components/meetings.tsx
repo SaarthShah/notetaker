@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect, useContext } from "react";
+import useSWR from 'swr';
+import { useState, useContext } from "react";
 import {
   Table,
   TableHeader,
@@ -32,51 +33,31 @@ type Meeting = {
 
 const ITEMS_PER_PAGE = 10;
 
+const fetcher = async () => {
+  const supabase = await createClient();
+  const user = await supabase.auth.getUser();
+
+  if (!user.data?.user) {
+    throw new Error("User not authenticated");
+  }
+
+  const { data, error } = await supabase
+    .from("meetings")
+    .select("*")
+    .eq("user_id", user.data.user.id);
+
+  if (error) {
+    throw new Error("Error fetching meetings from Supabase");
+  }
+
+  return data;
+};
+
 export function Meetings() {
-  const [meetings, setMeetings] = useState<Meeting[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: meetings, error } = useSWR('meetings', fetcher);
   const [currentPage, setCurrentPage] = useState(1);
   const sidebarContext = useContext(SidebarTitleContext);
   const router = useRouter();
-
-  const fetchMeetings = async () => {
-    try {
-      setLoading(true);
-      const cachedMeetings = localStorage.getItem("meetings");
-      if (cachedMeetings) {
-        setMeetings(JSON.parse(cachedMeetings));
-        setLoading(false);
-        return;
-      }
-
-      const supabase = await createClient();
-      const user = await supabase.auth.getUser();
-
-      if (!user.data?.user) {
-        throw new Error("User not authenticated");
-      }
-
-      const { data, error } = await supabase
-        .from("meetings")
-        .select("*")
-        .eq("user_id", user.data.user.id);
-
-      if (error) {
-        throw new Error("Error fetching meetings from Supabase");
-      }
-
-      setMeetings(data as Meeting[]);
-      localStorage.setItem("meetings", JSON.stringify(data));
-    } catch (error) {
-      console.error("Error fetching meetings:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchMeetings();
-  }, []);
 
   if (!sidebarContext) {
     throw new Error("SidebarContext is not available");
@@ -84,9 +65,8 @@ export function Meetings() {
 
   const { activeTab } = sidebarContext;
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  if (error) return <div>Error loading meetings</div>;
+  if (!meetings) return <div>Loading...</div>;
 
   const paginatedData = meetings.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -130,7 +110,7 @@ export function Meetings() {
             <Button
               isIconOnly
               variant="light"
-              onClick={fetchMeetings}
+              onClick={() => useSWR.mutate('meetings')}
             >
               <RefreshCw className="w-5 h-5" />
             </Button>
@@ -166,7 +146,7 @@ export function Meetings() {
               <TableColumn className="w-[8rem] text-left">Details</TableColumn>
             </TableHeader>
             <TableBody
-              isLoading={loading} // Use loading state to show loading content
+              isLoading={!meetings} // Use loading state to show loading content
               loadingContent={<div>Loading...</div>}
               className=""
             >
