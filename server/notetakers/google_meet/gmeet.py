@@ -46,26 +46,26 @@ async def join_meet(meet_link, end_time=30):
             print("Ensure BlackHole is installed and configured as the default audio device.")
         else:
             subprocess.check_output(
-                "sudo rm -rf /var/run/pulse /var/lib/pulse /root/.config/pulse", shell=True
+                "rm -rf /var/run/pulse /var/lib/pulse /root/.config/pulse", shell=True
             )
             subprocess.check_output(
-                "sudo pulseaudio -D --verbose --exit-idle-time=-1 --system --disallow-exit  >> /dev/null 2>&1",
+                "pulseaudio -D --verbose --exit-idle-time=-1 --system --disallow-exit  >> /dev/null 2>&1",
                 shell=True,
             )
             subprocess.check_output(
-                'sudo pactl load-module module-null-sink sink_name=DummyOutput sink_properties=device.description="Virtual_Dummy_Output"',
+                'pactl load-module module-null-sink sink_name=DummyOutput sink_properties=device.description="Virtual_Dummy_Output"',
                 shell=True,
             )
             subprocess.check_output(
-                'sudo pactl load-module module-null-sink sink_name=MicOutput sink_properties=device.description="Virtual_Microphone_Output"',
+                'pactl load-module module-null-sink sink_name=MicOutput sink_properties=device.description="Virtual_Microphone_Output"',
                 shell=True,
             )
             subprocess.check_output(
-                "sudo pactl set-default-source MicOutput.monitor", shell=True
+                "pactl set-default-source MicOutput.monitor", shell=True
             )
-            subprocess.check_output("sudo pactl set-default-sink MicOutput", shell=True)
+            subprocess.check_output("pactl set-default-sink MicOutput", shell=True)
             subprocess.check_output(
-                "sudo pactl load-module module-virtual-source source_name=VirtualMic",
+                "pactl load-module module-virtual-source source_name=VirtualMic",
                 shell=True,
             )
     except subprocess.CalledProcessError as e:
