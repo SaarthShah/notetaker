@@ -45,6 +45,12 @@ async def join_meet(meet_link, end_time=30):
         if os.uname().sysname == "Darwin":
             print("Ensure BlackHole is installed and configured as the default audio device.")
         else:
+            # Check if PulseAudio is running
+            pulse_check = subprocess.run(["pulseaudio", "--check"], capture_output=True)
+            if pulse_check.returncode != 0:
+                print("PulseAudio is not running. Attempting to start it.")
+                subprocess.run(["pulseaudio", "--start"], check=True)
+
             subprocess.check_output(
                 'pactl load-module module-null-sink sink_name=DummyOutput sink_properties=device.description="Virtual_Dummy_Output"',
                 shell=True,
@@ -63,6 +69,9 @@ async def join_meet(meet_link, end_time=30):
             )
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while setting up virtual audio drivers: {e}")
+        return
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
         return
 
     print('here subprocess end')
