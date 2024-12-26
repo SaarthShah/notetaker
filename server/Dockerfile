@@ -14,6 +14,7 @@ RUN apt-get update && \
 
 # Setup virtual audio drivers
 RUN useradd -m pulseaudio_user && \
+    mkdir -p /var/run/pulse /var/lib/pulse /root/.config/pulse && \
     chown -R pulseaudio_user:pulseaudio_user /var/run/pulse /var/lib/pulse /root/.config/pulse && \
     su pulseaudio_user -c "pulseaudio -D --verbose --exit-idle-time=-1 --system --disallow-exit" && \
     su pulseaudio_user -c "pactl load-module module-null-sink sink_name=DummyOutput sink_properties=device.description='Virtual_Dummy_Output'" && \
