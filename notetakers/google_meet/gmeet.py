@@ -9,6 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, InvalidSelectorException, StaleElementReferenceException
 import time
 import pyautogui as auto  # Import pyautogui for hotkey functionality
+from bs4 import BeautifulSoup
 
 # Load environment variables
 load_dotenv(os.path.join(os.path.dirname(__file__), '../.env'))
@@ -133,67 +134,29 @@ async def join_meet(meet_link, end_time=30):
     except NoSuchElementException:
         print("No popup")
 
+    
     print("Disable microphone")
     sleep(2)
 
     try:
-        print("Try to dismiss missing mic")
-        sleep(2)
-        mic_element = driver.find_element(By.CLASS_NAME, "VfPpkd-vQzf8d")
-        if mic_element:
-            print('mic is missing')
+        # Find the button to turn off the microphone using XPath
+        button = driver.find_element(By.XPATH, "//div[@aria-label='Turn off microphone']")
+        print("Disabling microphone using Selenium")
+        button.click()
     except NoSuchElementException:
-        print("No missing mic element found")
-
-    try:
-        print("Allow Microphone")
-        driver.find_element(
-            By.XPATH,
-            "/html/body/div/div[3]/div[2]/div/div/div/div/div[2]/div/div[1]/button",
-        ).click()
-        sleep(2)
-    except NoSuchElementException:
-        print("No Allow Microphone popup")
-
-    # Attempt to disable microphone and camera using existing methods
-    try:
-        time.sleep(2)
-        print("Try to disable microphone")
-        try:
-            element = driver.find_element(
-                By.XPATH,
-                '//*[@id="yDmH0d"]/c-wiz/div/div/div[35]/div[3]/div/div[2]/div[4]/div/div/div[1]/div[1]/div/div[7]/div[1]/div/div/div[1]'
-            )
-        except NoSuchElementException:
-            element = driver.find_element(
-                By.XPATH,
-                '//*[@id="yDmH0d"]/c-wiz/div/div/div[35]/div[4]/div/div[2]/div[4]/div/div/div[1]/div[1]/div/div[7]/div[1]/div/div/div[1]'
-            )
-        driver.execute_script("arguments[0].click();", element)
-    except (NoSuchElementException, InvalidSelectorException) as e:
-        print(f"Error disabling microphone: {e}")
-        # If the above method fails, use hotkeys
-        print("Using hotkeys to disable microphone and camera")
+        print("Microphone button not found using Selenium")
     sleep(2)
 
     # Disable camera
     print("Disable camera")
     try:
-        try:
-            driver.find_element(
-                By.XPATH,
-                '//*[@id="yDmH0d"]/c-wiz/div/div/div[35]/div[3]/div/div[2]/div[4]/div/div/div[1]/div[1]/div/div[7]/div[2]/div/div[1]'
-            ).click()
-        except NoSuchElementException:
-            driver.find_element(
-                By.XPATH,
-                '//*[@id="yDmH0d"]/c-wiz/div/div/div[35]/div[4]/div/div[2]/div[4]/div/div/div[1]/div[1]/div/div[7]/div[2]/div/div[1]'
-            ).click()
-        sleep(2)
+        # Find the button to turn off the camera using XPath
+        button = driver.find_element(By.XPATH, "//div[@aria-label='Turn off camera']")
+        print("Disabling camera using Selenium")
+        button.click()
     except NoSuchElementException:
-        print("Cannot disable camera: No such element")
-    except Exception as e:
-        print(f"Cannot disable camera: {e}")
+        print("Camera button not found using Selenium")
+    sleep(2)
 
     # Handle authentication and meeting options
     try:
@@ -232,7 +195,7 @@ async def join_meet(meet_link, end_time=30):
         sleep(2)
     # As another check, find the button that has "Join Now" in it and click it
     try:
-        join_now_button = driver.find_element(By.XPATH, '//button[contains(text(), "Join now")]')
+        join_now_button = driver.find_element(By.XPATH, "//span[contains(text(), 'Join now')]/ancestor::button")
         print(join_now_button)
         join_now_button.click()
         sleep(2)
@@ -291,9 +254,9 @@ async def join_meet(meet_link, end_time=30):
     # Return the transcript instead of saving to a file
     print("Returning the captured transcript")
 
-    # Close the Google Meet tab after capturing
-    driver.close()
-    print("Closed the Google Meet tab")
+    # Close the Google Meet window after capturing
+    driver.quit()
+    print("Closed the Google Meet window")
     print("- End of work")
 
     return transcript
