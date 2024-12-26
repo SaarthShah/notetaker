@@ -16,7 +16,8 @@ RUN apt-get update && \
 RUN useradd -m pulseaudio_user && \
     mkdir -p /var/run/pulse /var/lib/pulse /root/.config/pulse && \
     chown -R pulseaudio_user:pulseaudio_user /var/run/pulse /var/lib/pulse /root/.config/pulse && \
-    pulseaudio --start --system --disallow-module-loading --exit-idle-time=-1 && \
+    pulseaudio --system --disallow-module-loading --exit-idle-time=-1 & \
+    sleep 2 && \
     su pulseaudio_user -c "pactl load-module module-null-sink sink_name=DummyOutput sink_properties=device.description='Virtual_Dummy_Output'" && \
     su pulseaudio_user -c "pactl load-module module-null-sink sink_name=MicOutput sink_properties=device.description='Virtual_Microphone_Output'" && \
     su pulseaudio_user -c "pactl set-default-source MicOutput.monitor" && \
