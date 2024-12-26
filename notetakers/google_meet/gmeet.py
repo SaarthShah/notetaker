@@ -103,7 +103,7 @@ async def join_meet(meet_link, end_time=30):
 
     # Sign in to Google
     print("Google Sign in")
-    await google_sign_in(email, password, driver)
+    # await google_sign_in(email, password, driver)
 
     # Access the Google Meet link
     driver.get(meet_link)
@@ -159,40 +159,11 @@ async def join_meet(meet_link, end_time=30):
 
     # Handle authentication and meeting options
     try:
-        driver.find_element(
-            By.XPATH,
-            '//*[@id="yDmH0d"]/c-wiz/div/div/div[14]/div[3]/div/div[2]/div[4]/div/div/div[2]/div[1]/div[1]/div[3]/label/input',
-        ).click()
-        sleep(2)
-        driver.find_element(
-            By.XPATH,
-            '//*[@id="yDmH0d"]/c-wiz/div/div/div[14]/div[3]/div/div[2]/div[4]/div/div/div[2]/div[1]/div[1]/div[3]/label/input',
-        ).send_keys("TEST")
-        sleep(5)
-        driver.find_element(
-            By.XPATH,
-            '//*[@id="yDmH0d"]/c-wiz/div/div/div[14]/div[3]/div/div[2]/div[4]/div/div/div[2]/div[1]/div[2]/div[1]/div[1]/button/span',
-        ).click()
-        sleep(2)
+        input_element = driver.find_element(By.XPATH, './/input[@aria-label="Your name"]')  # XPath within the div
+        input_element.send_keys("Catchflow AI")
     except NoSuchElementException:
-        print("authentification already done")
-        sleep(5)
-        print(driver.title)
-        try:
-            driver.find_element(
-                By.XPATH,
-                '//*[@id="yDmH0d"]/c-wiz/div/div/div[35]/div[4]/div/div[2]/div[4]/div/div/div[2]/div[1]/div[2]/div[1]/div/div/button'
-            ).click()
-        except NoSuchElementException:
-            try:
-                driver.find_element(
-                    By.XPATH,
-                    '//*[@id="yDmH0d"]/c-wiz/div/div/div[35]/div[3]/div/div[2]/div[4]/div/div/div[2]/div[1]/div[2]/div[1]/div/div/button'
-                ).click()
-            except NoSuchElementException:
-                print("Neither button is present")
-        sleep(2)
-    # As another check, find the button that has "Join Now" in it and click it
+        print("Name input field not found")
+
     try:
         join_now_button = driver.find_element(By.XPATH, "//span[contains(text(), 'Join now')]/ancestor::button")
         print(join_now_button)
