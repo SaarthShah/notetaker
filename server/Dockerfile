@@ -13,16 +13,11 @@ RUN apt-get update && \
     pip install --no-cache-dir -r requirements.txt
 
 # Setup virtual audio drivers
-RUN useradd -m pulseaudio_user && \
+RUN apt-get update && \
+    apt-get install -y pulseaudio pulseaudio-utils dbus dbus-x11 && \
+    useradd -m pulseaudio_user && \
     mkdir -p /var/run/pulse /var/lib/pulse /root/.config/pulse && \
-    chown -R pulseaudio_user:pulseaudio_user /var/run/pulse /var/lib/pulse /root/.config/pulse && \
-    pulseaudio --system --disallow-module-loading --exit-idle-time=-1 & \
-    sleep 2 && \
-    su pulseaudio_user -c "pactl load-module module-null-sink sink_name=DummyOutput sink_properties=device.description='Virtual_Dummy_Output'" && \
-    su pulseaudio_user -c "pactl load-module module-null-sink sink_name=MicOutput sink_properties=device.description='Virtual_Microphone_Output'" && \
-    su pulseaudio_user -c "pactl set-default-source MicOutput.monitor" && \
-    su pulseaudio_user -c "pactl set-default-sink MicOutput" && \
-    su pulseaudio_user -c "pactl load-module module-virtual-source source_name=VirtualMic"
+    chown -R pulseaudio_user:pulseaudio_user /var/run/pulse /var/lib/pulse /root/.config/pulse
 
 # Expose the port that the app runs on
 EXPOSE 7099
