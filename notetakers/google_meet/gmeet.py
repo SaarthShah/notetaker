@@ -8,6 +8,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, InvalidSelectorException, StaleElementReferenceException
 import time
+import pyautogui as auto  # Import pyautogui for hotkey functionality
 
 # Load environment variables
 load_dotenv(os.path.join(os.path.dirname(__file__), '../.env'))
@@ -154,6 +155,7 @@ async def join_meet(meet_link, end_time=30):
     except NoSuchElementException:
         print("No Allow Microphone popup")
 
+    # Attempt to disable microphone and camera using existing methods
     try:
         time.sleep(2)
         print("Try to disable microphone")
@@ -170,7 +172,8 @@ async def join_meet(meet_link, end_time=30):
         driver.execute_script("arguments[0].click();", element)
     except (NoSuchElementException, InvalidSelectorException) as e:
         print(f"Error disabling microphone: {e}")
-
+        # If the above method fails, use hotkeys
+        print("Using hotkeys to disable microphone and camera")
     sleep(2)
 
     # Disable camera
@@ -227,6 +230,14 @@ async def join_meet(meet_link, end_time=30):
             except NoSuchElementException:
                 print("Neither button is present")
         sleep(2)
+    # As another check, find the button that has "Join Now" in it and click it
+    try:
+        join_now_button = driver.find_element(By.XPATH, '//button[contains(text(), "Join now")]')
+        print(join_now_button)
+        join_now_button.click()
+        sleep(2)
+    except NoSuchElementException:
+        print("Join Now button not found")
 
     # Start capturing the transcript
     print("Start capturing transcript")
