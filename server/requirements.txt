@@ -1,0 +1,11 @@
+fastapi
+pydantic
+uvicorn
+aiohttp
+python-dotenv
+python-dateutil
+pytz
+undetected-chromedriver
+selenium
+supabase
+openai
