@@ -23,27 +23,28 @@ def filter_meeting_events(events):
     ]
 
 def get_meeting_link(event):
-    """
-    Extracts a full meeting link from the event if available.
-
-    Args:
-        event (dict): An event dictionary.
-
-    Returns:
-        str: The full meeting link if found, otherwise an empty string.
-    """
     # Check for 'hangoutLink' in the event
     if 'hangoutLink' in event and event['hangoutLink']:
+        print("Found hangoutLink:", event['hangoutLink'])
         return event['hangoutLink']
     
-    # Define a regex pattern to match valid meeting URLs
-    meeting_url_pattern = re.compile(r'(https?://(?:meet\.google\.com|zoom\.us|teams\.microsoft\.com)/[^\s]+)')
+    # Define a regex pattern to match valid meeting URLs, allowing optional query parameters
+    meeting_url_pattern = re.compile(r'(https?://(?:meet\.google\.com|zoom\.us|teams\.microsoft\.com)/[^\s?]+(?:\?[^\s]*)?)')
     
     # Check for a meeting link in the 'description'
     if 'description' in event:
         match = meeting_url_pattern.search(event['description'])
         if match:
+            print("Found link in description:", match.group(0))
+            return match.group(0)
+    
+    # Check for a meeting link in the 'location'
+    if 'location' in event:
+        match = meeting_url_pattern.search(event['location'])
+        if match:
+            print("Found link in location:", match.group(0))
             return match.group(0)
     
     # Return an empty string if no meeting link is found
+    print("No meeting link found.")
     return ""

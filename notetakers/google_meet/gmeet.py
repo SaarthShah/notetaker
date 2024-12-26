@@ -8,8 +8,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, InvalidSelectorException, StaleElementReferenceException
 import time
-import pyautogui as auto  # Import pyautogui for hotkey functionality
-from bs4 import BeautifulSoup
 
 # Load environment variables
 load_dotenv(os.path.join(os.path.dirname(__file__), '../.env'))
@@ -87,6 +85,7 @@ async def join_meet(meet_link, end_time=30):
     options.add_argument("--disable-application-cache")
     options.add_argument("--disable-setuid-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--headless")  # Run Chrome in headless mode
     log_path = "chromedriver.log"
 
     # Initialize Chrome driver
@@ -245,7 +244,7 @@ async def join_meet(meet_link, end_time=30):
                         print(f"New transcript: {transcript_text}")
                 except StaleElementReferenceException:
                     print("Stale element reference exception caught, skipping this element.")
-            print(end_time * 60 - (time.time() - start_time))
+            # print(end_time * 60 - (time.time() - start_time))
     except Exception as e:
         print(f"An error occurred while capturing the transcript: {e}")
 
