@@ -46,13 +46,6 @@ async def join_meet(meet_link, end_time=30):
             print("Ensure BlackHole is installed and configured as the default audio device.")
         else:
             subprocess.check_output(
-                "rm -rf /var/run/pulse /var/lib/pulse /root/.config/pulse", shell=True
-            )
-            subprocess.check_output(
-                "pulseaudio -D --verbose --exit-idle-time=-1 --system --disallow-exit  >> /dev/null 2>&1",
-                shell=True,
-            )
-            subprocess.check_output(
                 'pactl load-module module-null-sink sink_name=DummyOutput sink_properties=device.description="Virtual_Dummy_Output"',
                 shell=True,
             )
