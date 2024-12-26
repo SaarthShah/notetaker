@@ -38,42 +38,7 @@ async def google_sign_in(email, password, driver):
 # Main function to join a Google Meet
 async def join_meet(meet_link, end_time=30):
     print(f"start recorder for {meet_link}")
-
-    # Setup virtual audio drivers
-    print("starting virtual audio drivers")
-    try:
-        if os.uname().sysname == "Darwin":
-            print("Ensure BlackHole is installed and configured as the default audio device.")
-        else:
-            subprocess.check_output(
-                "rm -rf /var/run/pulse /var/lib/pulse /root/.config/pulse", shell=True
-            )
-            subprocess.check_output(
-                "pulseaudio -D --verbose --exit-idle-time=-1 --system --disallow-exit  >> /dev/null 2>&1",
-                shell=True,
-            )
-            subprocess.check_output(
-                'pactl load-module module-null-sink sink_name=DummyOutput sink_properties=device.description="Virtual_Dummy_Output"',
-                shell=True,
-            )
-            subprocess.check_output(
-                'pactl load-module module-null-sink sink_name=MicOutput sink_properties=device.description="Virtual_Microphone_Output"',
-                shell=True,
-            )
-            subprocess.check_output(
-                "pactl set-default-source MicOutput.monitor", shell=True
-            )
-            subprocess.check_output("pactl set-default-sink MicOutput", shell=True)
-            subprocess.check_output(
-                "pactl load-module module-virtual-source source_name=VirtualMic",
-                shell=True,
-            )
-    except subprocess.CalledProcessError as e:
-        print(f"An error occurred while setting up virtual audio drivers: {e}")
-        return
-
-    print('here subprocess end')
-
+    
     # Configure Chrome options
     options = uc.ChromeOptions()
     options.add_argument("--use-fake-ui-for-media-stream")
