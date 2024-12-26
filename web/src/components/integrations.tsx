@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
+import useSWR from 'swr';
 import { createClient } from '@/app/utils/supabase-browser';
 import { User } from './interfaces/user';
 import { Button } from '@/components/ui/button';
@@ -12,34 +13,35 @@ interface CalendarIntegrationProps {
 }
 
 export function CalendarIntegration({ userInfo }: CalendarIntegrationProps) {
-  const [isConnected, setIsConnected] = useState(false);
   const cachedDataRef = useRef<any>(null);
   const supabase = createClient();
 
-  useEffect(() => {
-    const checkGoogleIntegration = async () => {
-      if (userInfo) {
-        if (cachedDataRef.current) {
-          setIsConnected(cachedDataRef.current.google_token && cachedDataRef.current.google_token.refresh_token);
-        } else {
-          const { data, error } = await supabase
-            .from('integrations')
-            .select('google_token')
-            .eq('user_id', userInfo.id)
-            .single();
+  const fetchIntegrationStatus = async () => {
+    if (userInfo) {
+      if (cachedDataRef.current) {
+        return cachedDataRef.current;
+      } else {
+        const { data, error } = await supabase
+          .from('integrations')
+          .select('google_token')
+          .eq('user_id', userInfo.id)
+          .single();
 
-          if (error) {
-            console.error('Error fetching integration data:', error);
-          } else if (data) {
-            cachedDataRef.current = data;
-            setIsConnected(data.google_token && data.google_token.refresh_token);
-          }
+        if (error) {
+          console.error('Error fetching integration data:', error);
+          return null;
+        } else if (data) {
+          cachedDataRef.current = data;
+          return data;
         }
       }
-    };
+    }
+    return null;
+  };
 
-    checkGoogleIntegration();
-  }, [userInfo, supabase]);
+  const { data: integrationData } = useSWR(userInfo ? 'integrationStatus' : null, fetchIntegrationStatus);
+
+  const isConnected = integrationData?.google_token && integrationData.google_token.refresh_token;
 
   const handleGoogleCalendarConnect = () => {
     const YOUR_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
