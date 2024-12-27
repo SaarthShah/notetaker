@@ -24,7 +24,7 @@ RUN apt-get update && \
 EXPOSE 7099
 
 RUN apt-get update && \
-    apt-get install -y dbus-x11 pulseaudio && \
+    apt-get install -y dbus-x11 pulseaudio upower && \
     rm -rf /var/lib/apt/lists/*
 
 # Set environment variable for XDG_RUNTIME_DIR
