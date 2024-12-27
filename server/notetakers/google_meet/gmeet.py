@@ -65,7 +65,8 @@ def upload_image_to_supabase(image, filename):
     buffer = BytesIO()
     image.save(buffer, format="PNG")
     buffer.seek(0)
-    response = supabase.storage.from_('screenshots').upload(filename, buffer, {"content-type": "image/png"})
+    # Convert BytesIO to bytes for upload
+    response = supabase.storage.from_('screenshots').upload(filename, buffer.getvalue(), {"content-type": "image/png"})
     return response
 
 # Function to capture and upload a screenshot
