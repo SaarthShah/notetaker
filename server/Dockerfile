@@ -21,4 +21,4 @@ RUN apt-get update && \
 EXPOSE 7099
 
 # Start pulseaudio, create virtual devices, and run the application
-CMD ["bash", "-c", "pulseaudio --system --disallow-exit --exit-idle-time=-1 && modprobe v4l2loopback && ffmpeg -f lavfi -i color=c=black:s=640x480:r=30 -f v4l2 /dev/video0 & pactl load-module module-null-sink sink_name=VirtualMic && pactl load-module module-loopback source=VirtualMic.monitor && uvicorn notetakers.app:app --host 0.0.0.0 --port 7099"]
+CMD ["bash", "-c", "pulseaudio --start --system --disallow-exit --exit-idle-time=-1 && modprobe v4l2loopback && ffmpeg -f lavfi -i color=c=black:s=640x480:r=30 -f v4l2 /dev/video0 & pactl load-module module-null-sink sink_name=VirtualMic && pactl load-module module-loopback source=VirtualMic.monitor && uvicorn notetakers.app:app --host 0.0.0.0 --port 7099"]
