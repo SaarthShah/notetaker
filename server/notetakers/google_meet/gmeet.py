@@ -14,6 +14,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from supabase import create_client, Client
 from io import BytesIO
 from PIL import Image
+from selenium_stealth import stealth
 
 # Load environment variables
 load_dotenv(os.path.join(os.path.dirname(__file__), '../.env'))
@@ -63,6 +64,17 @@ def create_chrome_driver():
     
     # Create the Chrome driver
     driver = uc.Chrome(service=service, options=options)
+    
+    # Apply Selenium Stealth
+    stealth(driver,
+            languages=["en-US", "en"],
+            vendor="Google Inc.",
+            platform="Win32",
+            webgl_vendor="Intel Inc.",
+            renderer="Intel Iris OpenGL Engine",
+            fix_hairline=True,
+            )
+    
     return driver
 
 # Function to upload image to Supabase

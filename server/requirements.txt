@@ -10,3 +10,4 @@ selenium
 supabase
 openai
 Pillow
+selenium-stealth
