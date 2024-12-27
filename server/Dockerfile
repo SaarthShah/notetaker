@@ -23,5 +23,5 @@ RUN apt-get update && \
 # Expose the port that the app runs on
 EXPOSE 7099
 
-# Run the application
-CMD ["uvicorn", "notetakers.app:app", "--host", "0.0.0.0", "--port", "7099"]
+# Run the application with xvfb, Google Chrome, and the API
+CMD ["bash", "-c", "xvfb-run -a google-chrome --no-sandbox --remote-debugging-port=9222 & uvicorn notetakers.app:app --host 0.0.0.0 --port 7099"]
