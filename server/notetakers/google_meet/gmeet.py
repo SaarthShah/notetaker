@@ -10,7 +10,6 @@ from selenium.common.exceptions import NoSuchElementException, StaleElementRefer
 import time
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-import undetected_chromedriver.v2 as uc
 
 
 # Load environment variables
