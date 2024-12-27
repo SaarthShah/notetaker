@@ -171,7 +171,7 @@ async def join_meet(meet_link, end_time=30):
     # Handle popups and disable microphone    
     capture_and_upload_screenshot(driver, "before popup handling")
     try:
-        WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+        WebDriverWait(driver, 120).until(EC.element_to_be_clickable(
             (By.XPATH, "/html/body/div/div[3]/div[2]/div/div/div/div/div[2]/div/div[1]/button")
         )).click()
     except NoSuchElementException:
