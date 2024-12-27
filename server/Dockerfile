@@ -24,11 +24,11 @@ RUN apt-get update && \
 EXPOSE 7099
 
 RUN apt-get update && \
-    apt-get install -y dbus-x11 pulseaudio upower && \
+    apt-get install -y xvfb libgl1-mesa-dri && \
     rm -rf /var/lib/apt/lists/*
 
 # Set environment variable for XDG_RUNTIME_DIR
 ENV XDG_RUNTIME_DIR=/tmp/runtime-pulseaudio_user
 
 # Start dbus and pulseaudio in the background
-CMD ["bash", "-c", "service dbus start && su - pulseaudio_user -c 'pulseaudio --start' && export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket && xvfb-run -a google-chrome --no-sandbox --disable-gpu --disable-software-rasterizer --remote-debugging-port=9222 & uvicorn notetakers.app:app --host 0.0.0.0 --port 7099"]
+CMD ["bash", "-c", "service dbus start && su - pulseaudio_user -c 'pulseaudio --start' && export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket && xvfb-run -a --server-args='-screen 0 1024x768x24' google-chrome --no-sandbox --remote-debugging-port=9222 & uvicorn notetakers.app:app --host 0.0.0.0 --port 7099"]
