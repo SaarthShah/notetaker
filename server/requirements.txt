@@ -9,4 +9,4 @@ undetected-chromedriver
 selenium
 supabase
 openai
-PIL
+Pillow
