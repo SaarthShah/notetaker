@@ -170,10 +170,9 @@ async def join_meet(meet_link, end_time=30):
         },
     )
 
-    time.sleep(5)
-
-    # Handle popups and disable microphone    
-    capture_and_upload_screenshot(driver, "before popup handling")
+    for i in range(5):
+        capture_and_upload_screenshot(driver, f"screenshot_{i+1}")
+        time.sleep(1)
     try:
         WebDriverWait(driver, 120).until(EC.element_to_be_clickable(
             (By.XPATH, "/html/body/div/div[3]/div[2]/div/div/div/div/div[2]/div/div[1]/button")
