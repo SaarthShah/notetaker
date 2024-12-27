@@ -51,7 +51,8 @@ def create_chrome_driver():
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--remote-debugging-port=9222")
     options.add_argument("--headless")  # Headless mode
-    options.add_argument("--window-size=1920x1080")  # Set window size
+    options.add_argument("--window-size=1920x1080")  # Set window size   
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
 
     # Ensure the correct path to the ChromeDriver
     service = Service('/path/to/chromedriver')
