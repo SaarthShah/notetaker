@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import undetected_chromedriver as uc
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, TimeoutException
 import time
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -149,8 +149,8 @@ async def join_meet(meet_link, end_time=30):
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
             (By.XPATH, "/html/body/div/div[3]/div[2]/div/div/div/div/div[2]/div/div[1]/button")
         )).click()
-    except NoSuchElementException:
-        print("No popup")
+    except (NoSuchElementException, TimeoutException):
+        print("No popup or timeout occurred")
 
     print("Disable microphone")
     try:
@@ -160,8 +160,8 @@ async def join_meet(meet_link, end_time=30):
         ))
         print("Disabling microphone using Selenium")
         button.click()
-    except NoSuchElementException:
-        print("Microphone button not found using Selenium")
+    except (NoSuchElementException, TimeoutException):
+        print("Microphone button not found or timeout occurred using Selenium")
 
     print("Disable camera")
     try:
@@ -171,8 +171,8 @@ async def join_meet(meet_link, end_time=30):
         ))
         print("Disabling camera using Selenium")
         button.click()
-    except NoSuchElementException:
-        print("Camera button not found using Selenium")
+    except (NoSuchElementException, TimeoutException):
+        print("Camera button not found or timeout occurred using Selenium")
 
     # Handle authentication and meeting options
     try:
@@ -180,8 +180,8 @@ async def join_meet(meet_link, end_time=30):
             (By.XPATH, './/input[@aria-label="Your name"]')
         ))
         input_element.send_keys("Catchflow AI")
-    except NoSuchElementException:
-        print("Name input field not found")
+    except (NoSuchElementException, TimeoutException):
+        print("Name input field not found or timeout occurred")
 
     try:
         join_now_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
@@ -189,8 +189,8 @@ async def join_meet(meet_link, end_time=30):
         ))
         print(join_now_button)
         join_now_button.click()
-    except NoSuchElementException:
-        print("Join Now button not found")
+    except (NoSuchElementException, TimeoutException):
+        print("Join Now button not found or timeout occurred")
 
     # Start capturing the transcript
     print("Start capturing transcript")
@@ -209,13 +209,13 @@ async def join_meet(meet_link, end_time=30):
             if caption_button.get_attribute("aria-pressed") == "false":
                 caption_button.click()
             break  # Exit the loop if the button is found and clicked
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             try:
                 waiting_text = driver.find_element(By.XPATH, '//*[contains(text(), "Asking to be let in")]')
                 if waiting_text:
                     print("Waiting to be let in")
             except NoSuchElementException:
-                print("Captions button not found. Retrying...")
+                print("Captions button not found or timeout occurred. Retrying...")
             time.sleep(1)  # Wait for a short period before retrying
 
     try:
