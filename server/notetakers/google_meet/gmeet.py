@@ -58,7 +58,7 @@ def create_chrome_driver():
     options.add_argument("--disable-infobars")
     options.add_argument("--disable-extensions")
     options.add_argument("--use-fake-ui-for-media-stream")
-    options.add_argument("--use-file-for-fake-video-capture=./black.y4m")
+    options.add_argument("--use-file-for-fake-video-capture=@black.y4m")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
 
     # Ensure the correct path to the ChromeDriver
