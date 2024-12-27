@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import undetected_chromedriver as uc
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, TimeoutException
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 import time
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -67,6 +67,12 @@ def upload_image_to_supabase(image, filename):
     buffer.seek(0)
     response = supabase.storage.from_('screenshots').upload(filename, buffer, {"content-type": "image/png"})
     return response
+
+# Function to capture and upload a screenshot
+def capture_and_upload_screenshot(driver, step_name):
+    screenshot = driver.get_screenshot_as_png()
+    image = Image.open(BytesIO(screenshot))
+    upload_image_to_supabase(image, f"{step_name}_{int(time.time())}.png")
 
 # Main function to join a Google Meet
 async def join_meet(meet_link, end_time=30):
@@ -144,13 +150,15 @@ async def join_meet(meet_link, end_time=30):
         },
     )
 
-    # Handle popups and disable microphone
+    # Handle popups and disable microphone    
+    capture_and_upload_screenshot(driver, "before popup handling")
     try:
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
+        WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
             (By.XPATH, "/html/body/div/div[3]/div[2]/div/div/div/div/div[2]/div/div[1]/button")
         )).click()
-    except (NoSuchElementException, TimeoutException):
-        print("No popup or timeout occurred")
+    except NoSuchElementException:
+        print("No popup")
+    capture_and_upload_screenshot(driver, "after_popup_handling")
 
     print("Disable microphone")
     try:
@@ -160,8 +168,9 @@ async def join_meet(meet_link, end_time=30):
         ))
         print("Disabling microphone using Selenium")
         button.click()
-    except (NoSuchElementException, TimeoutException):
-        print("Microphone button not found or timeout occurred using Selenium")
+    except NoSuchElementException:
+        print("Microphone button not found using Selenium")
+    capture_and_upload_screenshot(driver, "after_microphone_disable")
 
     print("Disable camera")
     try:
@@ -171,8 +180,9 @@ async def join_meet(meet_link, end_time=30):
         ))
         print("Disabling camera using Selenium")
         button.click()
-    except (NoSuchElementException, TimeoutException):
-        print("Camera button not found or timeout occurred using Selenium")
+    except NoSuchElementException:
+        print("Camera button not found using Selenium")
+    capture_and_upload_screenshot(driver, "after_camera_disable")
 
     # Handle authentication and meeting options
     try:
@@ -180,8 +190,9 @@ async def join_meet(meet_link, end_time=30):
             (By.XPATH, './/input[@aria-label="Your name"]')
         ))
         input_element.send_keys("Catchflow AI")
-    except (NoSuchElementException, TimeoutException):
-        print("Name input field not found or timeout occurred")
+    except NoSuchElementException:
+        print("Name input field not found")
+    capture_and_upload_screenshot(driver, "after_name_input")
 
     try:
         join_now_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
@@ -189,8 +200,9 @@ async def join_meet(meet_link, end_time=30):
         ))
         print(join_now_button)
         join_now_button.click()
-    except (NoSuchElementException, TimeoutException):
-        print("Join Now button not found or timeout occurred")
+    except NoSuchElementException:
+        print("Join Now button not found")
+    capture_and_upload_screenshot(driver, "after_join_now_click")
 
     # Start capturing the transcript
     print("Start capturing transcript")
@@ -209,14 +221,15 @@ async def join_meet(meet_link, end_time=30):
             if caption_button.get_attribute("aria-pressed") == "false":
                 caption_button.click()
             break  # Exit the loop if the button is found and clicked
-        except (NoSuchElementException, TimeoutException):
+        except NoSuchElementException:
             try:
                 waiting_text = driver.find_element(By.XPATH, '//*[contains(text(), "Asking to be let in")]')
                 if waiting_text:
                     print("Waiting to be let in")
             except NoSuchElementException:
-                print("Captions button not found or timeout occurred. Retrying...")
+                print("Captions button not found. Retrying...")
             time.sleep(1)  # Wait for a short period before retrying
+    capture_and_upload_screenshot(driver, "after_captions_button")
 
     try:
         while (time.time() - start_time) < (end_time * 60):
@@ -239,11 +252,6 @@ async def join_meet(meet_link, end_time=30):
                     print("Stale element reference exception caught, skipping this element.")
     except Exception as e:
         print(f"An error occurred while capturing the transcript: {e}")
-
-    # Capture a screenshot and upload to Supabase
-    screenshot = driver.get_screenshot_as_png()
-    image = Image.open(BytesIO(screenshot))
-    upload_image_to_supabase(image, f"screenshot_{int(time.time())}.png")
 
     print("Done capturing transcript")
 
