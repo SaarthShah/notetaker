@@ -86,7 +86,7 @@ async def join_meet(meet_link, end_time=30):
     options.add_argument("--disable-extensions")
     options.add_argument("--disable-application-cache")
     options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--headless")  # Run Chrome in headless mode
+    # options.add_argument("--headless")  # Run Chrome in headless mode
     log_path = "chromedriver.log"
 
     # Ensure binary location is set as a string
