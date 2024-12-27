@@ -46,7 +46,7 @@ def create_chrome_driver():
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--remote-debugging-port=9222")
     # Add headless if you want to try running in headless mode
-    # options.add_argument("--headless")
+    options.add_argument("--headless")
 
     # Ensure the correct path to the ChromeDriver
     service = Service('/path/to/chromedriver')
