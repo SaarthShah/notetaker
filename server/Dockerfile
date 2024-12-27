@@ -28,4 +28,4 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Start dbus and pulseaudio in the background
-CMD ["bash", "-c", "service dbus start && pulseaudio --start && xvfb-run -a google-chrome --no-sandbox --remote-debugging-port=9222 & uvicorn notetakers.app:app --host 0.0.0.0 --port 7099"]
+CMD ["bash", "-c", "service dbus start && su - pulseaudio_user -c 'pulseaudio --start' && xvfb-run -a google-chrome --no-sandbox --remote-debugging-port=9222 & uvicorn notetakers.app:app --host 0.0.0.0 --port 7099"]
