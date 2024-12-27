@@ -2,7 +2,6 @@ import asyncio
 import os
 import subprocess
 from dotenv import load_dotenv
-from time import sleep
 import undetected_chromedriver as uc
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -10,10 +9,19 @@ from selenium.common.exceptions import NoSuchElementException, StaleElementRefer
 import time
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from supabase import create_client, Client
+from io import BytesIO
+from PIL import Image
 
 # Load environment variables
 load_dotenv(os.path.join(os.path.dirname(__file__), '../.env'))
+
+# Initialize Supabase client
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Asynchronous function to run shell commands
 async def run_command_async(command):
@@ -26,27 +34,24 @@ async def run_command_async(command):
 # Asynchronous function to handle Google sign-in
 async def google_sign_in(email, password, driver):
     driver.get("https://accounts.google.com")
-    sleep(1)
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "identifier")))
     email_field = driver.find_element(By.NAME, "identifier")
     email_field.send_keys(email)
-    sleep(2)
-    driver.find_element(By.ID, "identifierNext").click()
-    sleep(3)
+    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "identifierNext"))).click()
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "Passwd")))
     password_field = driver.find_element(By.NAME, "Passwd")
     password_field.click()
     password_field.send_keys(password)
     password_field.send_keys(Keys.RETURN)
-    sleep(5)
-
-
+    WebDriverWait(driver, 10).until(EC.url_contains("myaccount.google.com"))
 
 def create_chrome_driver():
     options = Options()
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--remote-debugging-port=9222")
-    # Add headless if you want to try running in headless mode
-    options.add_argument("--headless")
+    options.add_argument("--headless")  # Headless mode
+    options.add_argument("--window-size=1920x1080")  # Set window size
 
     # Ensure the correct path to the ChromeDriver
     service = Service('/path/to/chromedriver')
@@ -55,6 +60,13 @@ def create_chrome_driver():
     driver = uc.Chrome(service=service, options=options)
     return driver
 
+# Function to upload image to Supabase
+def upload_image_to_supabase(image, filename):
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+    buffer.seek(0)
+    response = supabase.storage.from_('screenshots').upload(filename, buffer, {"content-type": "image/png"})
+    return response
 
 # Main function to join a Google Meet
 async def join_meet(meet_link, end_time=30):
@@ -97,22 +109,6 @@ async def join_meet(meet_link, end_time=30):
 
     print('here subprocess end')
 
-    # Configure Chrome options
-    # options = uc.ChromeOptions()
-    # options.add_argument("--use-fake-ui-for-media-stream")
-    # options.add_argument("--window-size=1920x1080")
-    # options.add_argument("--no-sandbox")
-    # options.add_argument("--disable-setuid-sandbox")
-    # options.add_argument("--disable-gpu")
-    # options.add_argument("--disable-extensions")
-    # options.add_argument("--disable-application-cache")
-    # options.add_argument("--disable-dev-shm-usage")
-    # # options.add_argument("--headless")  # Run Chrome in headless mode
-    # log_path = "chromedriver.log"
-
-    # # Ensure binary location is set as a string
-    # options.binary_location = "/usr/bin/google-chrome"
-
     # Initialize Chrome driver
     driver = create_chrome_driver()
     driver.set_window_size(1920, 1080)
@@ -150,50 +146,49 @@ async def join_meet(meet_link, end_time=30):
 
     # Handle popups and disable microphone
     try:
-        sleep(2)
-        driver.find_element(
-            By.XPATH,
-            "/html/body/div/div[3]/div[2]/div/div/div/div/div[2]/div/div[1]/button",
-        ).click()
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
+            (By.XPATH, "/html/body/div/div[3]/div[2]/div/div/div/div/div[2]/div/div[1]/button")
+        )).click()
     except NoSuchElementException:
         print("No popup")
 
-    
     print("Disable microphone")
-    sleep(2)
-
     try:
         # Find the button to turn off the microphone using XPath
-        button = driver.find_element(By.XPATH, "//div[@aria-label='Turn off microphone']")
+        button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
+            (By.XPATH, "//div[@aria-label='Turn off microphone']")
+        ))
         print("Disabling microphone using Selenium")
         button.click()
     except NoSuchElementException:
         print("Microphone button not found using Selenium")
-    sleep(2)
 
-    # Disable camera
     print("Disable camera")
     try:
         # Find the button to turn off the camera using XPath
-        button = driver.find_element(By.XPATH, "//div[@aria-label='Turn off camera']")
+        button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
+            (By.XPATH, "//div[@aria-label='Turn off camera']")
+        ))
         print("Disabling camera using Selenium")
         button.click()
     except NoSuchElementException:
         print("Camera button not found using Selenium")
-    sleep(2)
 
     # Handle authentication and meeting options
     try:
-        input_element = driver.find_element(By.XPATH, './/input[@aria-label="Your name"]')  # XPath within the div
+        input_element = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
+            (By.XPATH, './/input[@aria-label="Your name"]')
+        ))
         input_element.send_keys("Catchflow AI")
     except NoSuchElementException:
         print("Name input field not found")
 
     try:
-        join_now_button = driver.find_element(By.XPATH, "//span[contains(text(), 'Join now')]/ancestor::button")
+        join_now_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
+            (By.XPATH, "//span[contains(text(), 'Join now')]/ancestor::button")
+        ))
         print(join_now_button)
         join_now_button.click()
-        sleep(2)
     except NoSuchElementException:
         print("Join Now button not found")
 
@@ -206,7 +201,9 @@ async def join_meet(meet_link, end_time=30):
 
     while True and (time.time() - start_time) < (end_time * 60):
         try:
-            caption_button = driver.find_element(By.XPATH, '//*[@id="yDmH0d"]/c-wiz/div/div/div[34]/div[4]/div[10]/div/div/div[2]/div/div[3]/span/button')
+            caption_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
+                (By.XPATH, '//*[@id="yDmH0d"]/c-wiz/div/div/div[34]/div[4]/div[10]/div/div/div[2]/div/div[3]/span/button')
+            ))
             # Check if the button is not enabled by checking the aria-pressed attribute
             print(caption_button)
             if caption_button.get_attribute("aria-pressed") == "false":
@@ -219,11 +216,11 @@ async def join_meet(meet_link, end_time=30):
                     print("Waiting to be let in")
             except NoSuchElementException:
                 print("Captions button not found. Retrying...")
-            sleep(1)  # Wait for a short period before retrying
+            time.sleep(1)  # Wait for a short period before retrying
 
     try:
         while (time.time() - start_time) < (end_time * 60):
-            sleep(2)
+            time.sleep(2)
             transcript_elements = driver.find_elements(By.CSS_SELECTOR, ".a4cQT .nMcdL")
             for element in transcript_elements:
                 try:
@@ -240,9 +237,13 @@ async def join_meet(meet_link, end_time=30):
                         print(f"New transcript: {transcript_text}")
                 except StaleElementReferenceException:
                     print("Stale element reference exception caught, skipping this element.")
-            # print(end_time * 60 - (time.time() - start_time))
     except Exception as e:
         print(f"An error occurred while capturing the transcript: {e}")
+
+    # Capture a screenshot and upload to Supabase
+    screenshot = driver.get_screenshot_as_png()
+    image = Image.open(BytesIO(screenshot))
+    upload_image_to_supabase(image, f"screenshot_{int(time.time())}.png")
 
     print("Done capturing transcript")
 
