@@ -170,6 +170,8 @@ async def join_meet(meet_link, end_time=30):
         },
     )
 
+    time.sleep(5)
+
     # Handle popups and disable microphone    
     capture_and_upload_screenshot(driver, "before popup handling")
     try:
