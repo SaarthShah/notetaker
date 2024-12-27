@@ -27,5 +27,8 @@ RUN apt-get update && \
     apt-get install -y dbus-x11 pulseaudio && \
     rm -rf /var/lib/apt/lists/*
 
+# Set environment variable for XDG_RUNTIME_DIR
+ENV XDG_RUNTIME_DIR=/tmp/runtime-pulseaudio_user
+
 # Start dbus and pulseaudio in the background
 CMD ["bash", "-c", "service dbus start && su - pulseaudio_user -c 'pulseaudio --start' && xvfb-run -a google-chrome --no-sandbox --remote-debugging-port=9222 & uvicorn notetakers.app:app --host 0.0.0.0 --port 7099"]
