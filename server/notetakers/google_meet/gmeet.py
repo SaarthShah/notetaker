@@ -6,8 +6,12 @@ from time import sleep
 import undetected_chromedriver as uc
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException, InvalidSelectorException, StaleElementReferenceException
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 import time
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+import undetected_chromedriver.v2 as uc
+
 
 # Load environment variables
 load_dotenv(os.path.join(os.path.dirname(__file__), '../.env'))
@@ -34,6 +38,24 @@ async def google_sign_in(email, password, driver):
     password_field.send_keys(password)
     password_field.send_keys(Keys.RETURN)
     sleep(5)
+
+
+
+def create_chrome_driver():
+    options = Options()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--remote-debugging-port=9222")
+    # Add headless if you want to try running in headless mode
+    # options.add_argument("--headless")
+
+    # Ensure the correct path to the ChromeDriver
+    service = Service('/path/to/chromedriver')
+    
+    # Create the Chrome driver
+    driver = uc.Chrome(service=service, options=options)
+    return driver
+
 
 # Main function to join a Google Meet
 async def join_meet(meet_link, end_time=30):
@@ -77,23 +99,23 @@ async def join_meet(meet_link, end_time=30):
     print('here subprocess end')
 
     # Configure Chrome options
-    options = uc.ChromeOptions()
-    options.add_argument("--use-fake-ui-for-media-stream")
-    options.add_argument("--window-size=1920x1080")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-setuid-sandbox")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--disable-extensions")
-    options.add_argument("--disable-application-cache")
-    options.add_argument("--disable-dev-shm-usage")
-    # options.add_argument("--headless")  # Run Chrome in headless mode
-    log_path = "chromedriver.log"
+    # options = uc.ChromeOptions()
+    # options.add_argument("--use-fake-ui-for-media-stream")
+    # options.add_argument("--window-size=1920x1080")
+    # options.add_argument("--no-sandbox")
+    # options.add_argument("--disable-setuid-sandbox")
+    # options.add_argument("--disable-gpu")
+    # options.add_argument("--disable-extensions")
+    # options.add_argument("--disable-application-cache")
+    # options.add_argument("--disable-dev-shm-usage")
+    # # options.add_argument("--headless")  # Run Chrome in headless mode
+    # log_path = "chromedriver.log"
 
-    # Ensure binary location is set as a string
-    options.binary_location = "/usr/bin/google-chrome"
+    # # Ensure binary location is set as a string
+    # options.binary_location = "/usr/bin/google-chrome"
 
     # Initialize Chrome driver
-    driver = uc.Chrome(service_log_path=log_path, use_subprocess=False, options=options)
+    driver = create_chrome_driver()
     driver.set_window_size(1920, 1080)
 
     # Retrieve email and password from environment variables
