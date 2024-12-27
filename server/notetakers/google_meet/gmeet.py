@@ -24,6 +24,21 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+# Function to upload image to Supabase
+def upload_image_to_supabase(image, filename):
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+    buffer.seek(0)
+    # Convert BytesIO to bytes for upload
+    response = supabase.storage.from_('screenshots').upload(filename, buffer.getvalue(), {"content-type": "image/png"})
+    return response
+
+# Function to capture and upload a screenshot
+def capture_and_upload_screenshot(driver, step_name):
+    screenshot = driver.get_screenshot_as_png()
+    image = Image.open(BytesIO(screenshot))
+    upload_image_to_supabase(image, f"{step_name}_{int(time.time())}.png")
+
 # Asynchronous function to run shell commands
 async def run_command_async(command):
     process = await asyncio.create_subprocess_shell(
@@ -38,13 +53,16 @@ async def google_sign_in(email, password, driver):
     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "identifier")))
     email_field = driver.find_element(By.NAME, "identifier")
     email_field.send_keys(email)
+    capture_and_upload_screenshot(driver, "email_entered")
     WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "identifierNext"))).click()
     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "Passwd")))
     password_field = driver.find_element(By.NAME, "Passwd")
     password_field.click()
     password_field.send_keys(password)
+    capture_and_upload_screenshot(driver, "password_entered")
     password_field.send_keys(Keys.RETURN)
     WebDriverWait(driver, 10).until(EC.url_contains("myaccount.google.com"))
+    capture_and_upload_screenshot(driver, "login_successful")
 
 def create_chrome_driver():
     options = Options()
@@ -78,21 +96,6 @@ def create_chrome_driver():
             )
     
     return driver
-
-# Function to upload image to Supabase
-def upload_image_to_supabase(image, filename):
-    buffer = BytesIO()
-    image.save(buffer, format="PNG")
-    buffer.seek(0)
-    # Convert BytesIO to bytes for upload
-    response = supabase.storage.from_('screenshots').upload(filename, buffer.getvalue(), {"content-type": "image/png"})
-    return response
-
-# Function to capture and upload a screenshot
-def capture_and_upload_screenshot(driver, step_name):
-    screenshot = driver.get_screenshot_as_png()
-    image = Image.open(BytesIO(screenshot))
-    upload_image_to_supabase(image, f"{step_name}_{int(time.time())}.png")
 
 # Main function to join a Google Meet
 async def join_meet(meet_link, end_time=30):
@@ -150,7 +153,7 @@ async def join_meet(meet_link, end_time=30):
 
     # Sign in to Google
     print("Google Sign in")
-    # await google_sign_in(email, password, driver)
+    await google_sign_in(email, password, driver)
 
     # Access the Google Meet link
     driver.get(meet_link)
