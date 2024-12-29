@@ -2,18 +2,19 @@ from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 import uvicorn
 from datetime import datetime
-from .google_meet.gmeet import join_meet
-from .agent.cleanup import clean_google_meet_transcript
-from .agent.summarizer import summarize_transcript
+from google_meet.gmeet import join_meet
+from zoom.zoom import join_zoom_meeting
+from agent.cleanup import clean_google_meet_transcript
+from agent.summarizer import summarize_transcript
 from supabase import create_client, Client
 
 import os
 import json
 from dotenv import load_dotenv
 from fastapi.responses import JSONResponse
-from .calendars.google import get_access_token_from_refresh_token, sync_google_calendar_events, sync_google_calendar
-from .calendars.utils import filter_meeting_events, get_meeting_link
-from .calendars.cron import upsert_cron_job
+from calendars.google import get_access_token_from_refresh_token, sync_google_calendar_events, sync_google_calendar
+from calendars.utils import filter_meeting_events, get_meeting_link
+from calendars.cron import upsert_cron_job
 from dateutil import parser
 
 load_dotenv()
@@ -201,6 +202,28 @@ async def sync_calendar(request: Request):
         print(f"An error occurred: {e}")
         return JSONResponse({"status": "error", "detail": str(e)}, status_code=400)
 
+@app.post("/join-zoom")
+async def join_zoom(request: Request):
+    try:
+        data = await request.json()
+        meeting_link = data.get("meeting_link")
+        meeting_password = data.get("meeting_password")
+        end_time = data.get("end_time")
+
+        if not meeting_link:
+            raise HTTPException(status_code=400, detail="Missing meeting_link")
+
+        if end_time is None:
+            raise HTTPException(status_code=400, detail="Missing end_time")
+
+        # Call the join_zoom_meeting function from zoom.py
+        join_zoom_meeting(meeting_link, meeting_password, end_time)
+
+        return JSONResponse({"status": "success"}, status_code=200)
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return JSONResponse({"status": "error", "detail": str(e)}, status_code=400)
 
 
 if __name__ == "__main__":
