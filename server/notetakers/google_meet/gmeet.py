@@ -77,7 +77,7 @@ def create_chrome_driver():
     options.add_argument("--disable-extensions")
     options.add_argument("--use-fake-ui-for-media-stream")
     options.add_argument("--use-file-for-fake-video-capture=@black.y4m")
-    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
+    options.add_argument("user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
 
     # Ensure the correct path to the ChromeDriver
     service = Service('/usr/bin/chromedriver')
@@ -94,6 +94,56 @@ def create_chrome_driver():
             renderer="Intel Iris OpenGL Engine",
             fix_hairline=True,
             )
+    
+    # Inject JavaScript to bypass headless detection
+    def inject_js(driver):
+        js_code = """
+        Object.defineProperty(navigator, 'languages', {
+            get: function() {
+                return ['en-US', 'en'];
+            },
+        });
+        Object.defineProperty(navigator, 'plugins', {
+            get: function() {
+                return [1, 2, 3, 4, 5];
+            },
+        });
+        const getParameter = WebGLRenderingContext.getParameter;
+        WebGLRenderingContext.prototype.getParameter = function(parameter) {
+            if (parameter === 37445) {
+                return 'Intel Open Source Technology Center';
+            }
+            if (parameter === 37446) {
+                return 'Mesa DRI Intel(R) Ivybridge Mobile ';
+            }
+            return getParameter(parameter);
+        };
+        ['height', 'width'].forEach(property => {
+            const imageDescriptor = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, property);
+            Object.defineProperty(HTMLImageElement.prototype, property, {
+                ...imageDescriptor,
+                get: function() {
+                    if (this.complete && this.naturalHeight == 0) {
+                        return 20;
+                    }
+                    return imageDescriptor.get.apply(this);
+                },
+            });
+        });
+        const elementDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight');
+        Object.defineProperty(HTMLDivElement.prototype, 'offsetHeight', {
+            ...elementDescriptor,
+            get: function() {
+                if (this.id === 'modernizr') {
+                    return 1;
+                }
+                return elementDescriptor.get.apply(this);
+            },
+        });
+        """
+        driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": js_code})
+
+    inject_js(driver)
     
     return driver
 
