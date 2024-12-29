@@ -5,8 +5,9 @@ import re
 from os import execl
 from sys import executable
 from dotenv import load_dotenv
-from selenium import webdriver
+import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
+from selenium_stealth import stealth
 
 # Load environment variables
 load_dotenv()
@@ -21,7 +22,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                     level=logging.INFO)
 
 def join_zoom_meeting(meeting_url, password, end_time):
-    options = webdriver.ChromeOptions()
+    options = uc.ChromeOptions()
     # options.add_argument("--headless")
     options.add_argument("--disable-infobars")
     options.add_argument("--window-size=1200,800")
@@ -32,7 +33,17 @@ def join_zoom_meeting(meeting_url, password, end_time):
         "profile.default_content_setting_values.notifications": 2
     })
 
-    browser = webdriver.Chrome(options=options)
+    browser = uc.Chrome(options=options)
+
+    # Apply Selenium Stealth
+    stealth(browser,
+            languages=["en-US", "en"],
+            vendor="Google Inc.",
+            platform="Win32",
+            webgl_vendor="Intel Inc.",
+            renderer="Intel Iris OpenGL Engine",
+            fix_hairline=True,
+            )
 
     try:
         print("Typing...")
@@ -48,8 +59,8 @@ def join_zoom_meeting(meeting_url, password, end_time):
         time.sleep(1)  # Artificial delay
         print("Photo uploaded")
         os.remove('ss.png')
-        browser.find_element(By.XPATH, '//button[text()="Sign In"]').click()
-        time.sleep(4)
+        browser.find_element(By.XPATH, '//button[@id="js_btn_login"]').click()
+        time.sleep(20)
         print("Logged In!")
         meeting_number_match = re.search(r'/j/(\d+)', meeting_url)
         if not meeting_number_match:
