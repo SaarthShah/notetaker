@@ -68,14 +68,14 @@ def join_zoom_meeting(meeting_url, password, end_time):
             return
         meeting_number = meeting_number_match.group(1)
         time.sleep(1)  # Artificial delay
-        browser.get(f'https://zoom.us/wc/join/{meeting_number}?action=join&pwd={password}')
+        browser.get(f'https://app.zoom.us/wc/{meeting_number}/join?fromPWA=1&pwd={password}')
         time.sleep(5)
         browser.save_screenshot("ss.png")
         print("Uploading photo...")
         time.sleep(1)  # Artificial delay
         print("Photo uploaded")
         os.remove('ss.png')
-        browser.find_element(By.XPATH, '//*[@id="joinBtn"]').click()
+        browser.find_element(By.XPATH, '//button[@class="zm-btn preview-join-button zm-btn--default zm-btn__outline--blue"]').click()
         time.sleep(5)
         browser.save_screenshot("ss.png")
         print("Uploading photo...")
