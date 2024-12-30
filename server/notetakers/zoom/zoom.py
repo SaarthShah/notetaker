@@ -2,13 +2,12 @@ import logging
 import os
 import time
 import re
+import random
 from os import execl
 from sys import executable
 from dotenv import load_dotenv
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium_stealth import stealth
 
 # Load environment variables
@@ -25,17 +24,19 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 def join_zoom_meeting(meeting_url, password, end_time):
     options = uc.ChromeOptions()
-    options.add_argument("--headless=new")  # Use the new headless mode
+    # Remove headless mode
+    # options.add_argument("--headless=new")
+    options.add_argument("--no-sandbox")
     options.add_argument("--disable-infobars")
-    options.add_argument("--window-size=1200,800")
-    user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36"
+    options.add_argument("--window-size=1920,1080")
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     options.add_argument(f"user-agent={user_agent}")
     options.add_experimental_option("prefs", {
-        "profile.default_content_setting_values.media_stream_mic": 2,     # 1:allow, 2:block
-        "profile.default_content_setting_values.media_stream_camera": 2,
-        "profile.default_content_setting_values.notifications": 2
+        "profile.default_content_setting_values.media_stream_mic": 1,
+        "profile.default_content_setting_values.media_stream_camera": 1,
+        "profile.default_content_setting_values.notifications": 1
     })
-    options.add_argument("--disable-blink-features=AutomationControlled")  # Prevent detection
+    options.add_argument("--disable-blink-features=AutomationControlled")
 
     browser = uc.Chrome(options=options)
 
@@ -101,24 +102,19 @@ def join_zoom_meeting(meeting_url, password, end_time):
 
     try:
         print("Typing...")
-        time.sleep(2)  # Artificial delay
+        time.sleep(random.uniform(1, 3))  # Random delay
         browser.get('https://zoom.us/signin')
-        time.sleep(1)  # Artificial delay
+        time.sleep(random.uniform(1, 3))  # Random delay
         browser.find_element(By.ID, 'email').send_keys(usernameStr)
-        time.sleep(1)  # Artificial delay
+        time.sleep(random.uniform(1, 3))  # Random delay
         browser.find_element(By.ID, 'password').send_keys(passwordStr)
-        time.sleep(1)  # Artificial delay
-        browser.save_screenshot("login_screenshot.png")
-        print("Uploading photo...")
-        time.sleep(1)  # Artificial delay
-        print("Photo uploaded")
+        time.sleep(random.uniform(1, 3))  # Random delay
         browser.find_element(By.XPATH, '//button[@id="js_btn_login"]').click()
+        time.sleep(random.uniform(3, 5))  # Random delay
         browser.save_screenshot("pre_login_screenshot.png")
-        WebDriverWait(browser, 20).until(EC.presence_of_element_located((By.XPATH, '//div[@id="js_btn_login"]')))
-        
         browser.save_screenshot("post_login_screenshot.png")
         print("Screenshot after login taken")
-        time.sleep(5)
+        time.sleep(random.uniform(3, 5))  # Random delay
         browser.save_screenshot("pre_meeting_screenshot.png")
         print("Screenshot before meeting taken")
         print("Logged In!")
@@ -127,24 +123,19 @@ def join_zoom_meeting(meeting_url, password, end_time):
             print("Invalid meeting URL.")
             return
         meeting_number = meeting_number_match.group(1)
-        time.sleep(1)  # Artificial delay
+        time.sleep(random.uniform(1, 3))  # Random delay
         browser.get(f'https://app.zoom.us/wc/{meeting_number}/join?fromPWA=1&pwd={password}')
-        time.sleep(5)
+        time.sleep(random.uniform(3, 5))  # Random delay
         browser.save_screenshot("meeting_join_screenshot.png")
-        print("Uploading photo...")
-        time.sleep(1)  # Artificial delay
-        print("Photo uploaded")
         browser.switch_to.frame(browser.find_element(By.TAG_NAME, 'iframe'))
         browser.save_screenshot("before_join_screenshot.png")
         print("Photo before clicking join button taken")
         join_button = browser.find_element(By.XPATH, '//button[contains(@class, "zm-btn")]')
         join_button.click()
-        time.sleep(5)
+        time.sleep(random.uniform(3, 5))  # Random delay
         browser.save_screenshot("after_join_screenshot.png")
         print("Photo after clicking join button taken")
         browser.save_screenshot("meeting_attendance_screenshot.png")
-        print("Uploading photo...")
-        time.sleep(1)  # Artificial delay
         print("Attending Your Meeting")
 
         # Wait for the meeting to end

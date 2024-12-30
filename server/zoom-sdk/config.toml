@@ -1,0 +1,14 @@
+#### !! Do not store plain text credentials in production environments !!
+#### File Format: https://cliutils.github.io/CLI11/book/chapters/config.html#configure-file-format
+
+# Zoom Meeting SDK Client ID
+client-id="S7nnDXa6RECu3j4z5VG25g"
+
+# Zoom Meeting SDK Client Secret
+client-secret="79YctMDhT5SddU1vXzkcp4M3hA5D24ff"
+
+# Use a join-url or a meeting-id and password
+join-url="https://berkeley.zoom.us/j/91762862686?pwd=UzullHdm5Vk20AkxjzEbnHGIOwmAVq.1"
+
+[RawAudio]
+file="meeting-audio.pcm"

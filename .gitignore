@@ -45,3 +45,5 @@ next-env.d.ts
 google_secret.json
 
 __pycache__/
+
+server/zoom-sdk/lib/zoomsdk/*

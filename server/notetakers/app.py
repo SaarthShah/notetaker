@@ -2,19 +2,19 @@ from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 import uvicorn
 from datetime import datetime
-from .google_meet.gmeet import join_meet
-from .zoom.zoom import join_zoom_meeting
-from .agent.cleanup import clean_google_meet_transcript
-from .agent.summarizer import summarize_transcript
+from google_meet.gmeet import join_meet
+from zoom.zoom import join_zoom_meeting
+from agent.cleanup import clean_google_meet_transcript
+from agent.summarizer import summarize_transcript
 from supabase import create_client, Client
 
 import os
 import json
 from dotenv import load_dotenv
 from fastapi.responses import JSONResponse
-from .calendars.google import get_access_token_from_refresh_token, sync_google_calendar_events, sync_google_calendar
-from .calendars.utils import filter_meeting_events, get_meeting_link
-from .calendars.cron import upsert_cron_job
+from calendars.google import get_access_token_from_refresh_token, sync_google_calendar_events, sync_google_calendar
+from calendars.utils import filter_meeting_events, get_meeting_link
+from calendars.cron import upsert_cron_job
 from dateutil import parser
 
 load_dotenv()
