@@ -1,0 +1,27 @@
+Detecting compiler hash for triplet x64-linux...
+Compiler found: /usr/bin/c++
+All requested packages are currently installed.
+Total install time: 36.6 us
+ada-url provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(ada CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE ada::ada)
+
+cli11 provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(CLI11 CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE CLI11::CLI11)
+
+cli11 provides pkg-config modules:
+
+  # C++ command line parser
+  CLI11
+
+jwt-cpp provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(jwt-cpp CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE jwt-cpp::jwt-cpp)
+

@@ -8,7 +8,7 @@ set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR x86_64)
 
-set(ZOOM_SDK lib/zoomsdk)
+set(ZOOM_SDK /lib/zoomsdk)
 
 find_package(ada REQUIRED)
 find_package(CLI11 REQUIRED)

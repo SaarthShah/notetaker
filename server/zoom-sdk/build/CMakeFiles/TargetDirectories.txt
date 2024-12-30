@@ -1,0 +1,3 @@
+/tmp/meeting-sdk-linux-sample/build/CMakeFiles/zoomsdk.dir
+/tmp/meeting-sdk-linux-sample/build/CMakeFiles/edit_cache.dir
+/tmp/meeting-sdk-linux-sample/build/CMakeFiles/rebuild_cache.dir

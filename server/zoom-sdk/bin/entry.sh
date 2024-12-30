@@ -34,13 +34,16 @@ setup-pulseaudio() {
 
 build() {
   # Configure CMake if this is the first run
+  echo "Contents of /lib/zoomsdk:";
+  ls /lib/zoomsdk;
+
   [[ ! -d "$BUILD" ]] && {
     cmake -B "$BUILD" -S . --preset debug || exit;
     npm --prefix=client install
   }
 
-  # Rename the shared library
-  LIB="lib/zoomsdk/libmeetingsdk.so"
+  # Correct the path for the shared library
+  LIB="/lib/zoomsdk/libmeetingsdk.so"
   [[ ! -f "${LIB}.1" ]] && cp "$LIB"{,.1}
 
   # Set up and start pulseaudio

@@ -1,0 +1,9 @@
+x64-linux/
+x64-linux/include/
+x64-linux/include/picojson/
+x64-linux/include/picojson/picojson.h
+x64-linux/share/
+x64-linux/share/picojson/
+x64-linux/share/picojson/copyright
+x64-linux/share/picojson/vcpkg.spdx.json
+x64-linux/share/picojson/vcpkg_abi_info.txt

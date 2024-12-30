@@ -41,7 +41,8 @@ RUN apt-get update  \
     pkgconf \
     tar \
     unzip \
-    zip
+    zip \
+    ninja-build
 
 # Install ALSA
 RUN apt-get install -y libasound2 libasound2-plugins alsa alsa-utils alsa-oss
@@ -49,7 +50,16 @@ RUN apt-get install -y libasound2 libasound2-plugins alsa alsa-utils alsa-oss
 # Install Pulseaudio
 RUN apt-get install -y  pulseaudio pulseaudio-utils
 
+COPY lib /lib
+
+COPY lib/zoom-meeting-sdk-linux_x86_64-6.3.0.6019.tar.xz /tmp/
+
+RUN mkdir -p /lib/zoomsdk/ && \
+    tar -xvf /tmp/zoom-meeting-sdk-linux_x86_64-6.3.0.6019.tar.xz -C /lib/zoomsdk
+
 FROM base AS deps
+
+ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 
 ENV TINI_VERSION v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
@@ -63,7 +73,7 @@ RUN git clone --depth 1 https://github.com/Microsoft/vcpkg.git \
 
 FROM deps AS build
 
+ENV VCPKG_FORCE_SYSTEM_BINARIES=1
+
 WORKDIR $cwd
 ENTRYPOINT ["/tini", "--", "./bin/entry.sh"]
-
-
