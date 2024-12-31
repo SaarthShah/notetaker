@@ -21,4 +21,4 @@ RUN apt-get update && \
 EXPOSE 7099
 
 # Start pulseaudio and the application
-CMD ["bash", "-c", "pulseaudio --start && uvicorn notetakers.app:app --host 0.0.0.0 --port 7099 --reload"]
+# CMD ["bash", "-c", "pulseaudio --start && uvicorn notetakers.app:app --host 0.0.0.0 --port 7099 --reload"]

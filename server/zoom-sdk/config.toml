@@ -2,13 +2,13 @@
 #### File Format: https://cliutils.github.io/CLI11/book/chapters/config.html#configure-file-format
 
 # Zoom Meeting SDK Client ID
-client-id="S7nnDXa6RECu3j4z5VG25g"
+client-id="bIwyq7_7TempWjqkOXEwA"
 
 # Zoom Meeting SDK Client Secret
-client-secret="79YctMDhT5SddU1vXzkcp4M3hA5D24ff"
+client-secret="9x9heO1phgqUaPmtHg6B3NvZp4Ejuhl4"
 
 # Use a join-url or a meeting-id and password
-join-url="https://berkeley.zoom.us/j/91762862686?pwd=UzullHdm5Vk20AkxjzEbnHGIOwmAVq.1"
+join-url="https://us05web.zoom.us/j/83033941671?pwd=wrqciiva2fkpdawPhMDrwKfElLbeFu.1"
 
 [RawAudio]
 file="meeting-audio.pcm"

@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 
+# Check if meeting number and password are provided
+if [ -z "$1" ] || [ -z "$2" ]; then
+  echo "Usage: $0 <meeting_number> <password>"
+  exit 1
+fi
+
+MEETING_NUMBER=$1
+PASSWORD=$2
+
 # directory for CMake output
 BUILD=build
 
@@ -33,31 +42,29 @@ setup-pulseaudio() {
 }
 
 build() {
-  # Configure CMake if this is the first run
-  echo "Contents of /lib/zoomsdk:";
-  ls /lib/zoomsdk;
-
-  [[ ! -d "$BUILD" ]] && {
-    cmake -B "$BUILD" -S . --preset debug || exit;
+  # Only configure CMake if this is the first run
+  if [[ ! -d "$BUILD" ]]; then
+    echo "Building the project..."
+    cmake -B "$BUILD" -S . --preset debug || exit
     npm --prefix=client install
-  }
+  else
+    echo "Build directory already exists. Skipping build."
+  fi
 
   # Correct the path for the shared library
   LIB="/lib/zoomsdk/libmeetingsdk.so"
   [[ ! -f "${LIB}.1" ]] && cp "$LIB"{,.1}
 
   # Set up and start pulseaudio
-  setup-pulseaudio &> /dev/null || exit;
-
-  # Build the Source Code
-  cmake --build "$BUILD"
+  setup-pulseaudio &> /dev/null || exit
 }
 
 run() {
-    exec ./"$BUILD"/zoomsdk
+    # Use the meeting number and password to start/join the meeting
+    echo "Starting meeting with number: $MEETING_NUMBER and password: $PASSWORD"
+    exec ./"$BUILD"/zoomsdk --meeting-number "$MEETING_NUMBER" --password "$PASSWORD"
 }
 
-build && run;
+build && run
 
 exit $?
-
