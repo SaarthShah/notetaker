@@ -207,7 +207,6 @@ async def join_zoom(request: Request):
     try:
         data = await request.json()
         meeting_link = data.get("meeting_link")
-        meeting_password = data.get("meeting_password")
         end_time = data.get("end_time")
 
         if not meeting_link:
@@ -217,7 +216,7 @@ async def join_zoom(request: Request):
             raise HTTPException(status_code=400, detail="Missing end_time")
 
         # Call the join_zoom_meeting function from zoom.py
-        join_zoom_meeting(meeting_link, meeting_password, end_time)
+        join_zoom_meeting(meeting_link, end_time)
 
         return JSONResponse({"status": "success"}, status_code=200)
 

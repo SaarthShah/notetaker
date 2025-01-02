@@ -15,7 +15,7 @@ client_secret = os.getenv('ZOOM_CLIENT_SECRET')
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.DEBUG)  # Set to DEBUG to capture more detailed logs
 
-def join_zoom_meeting(meeting_url, password, end_time):
+def join_zoom_meeting(meeting_url, end_time):
     logging.debug("join_zoom_meeting function called")
     try:
         # Check if the zoomsdk directory exists
@@ -48,31 +48,39 @@ def join_zoom_meeting(meeting_url, password, end_time):
         logging.info('Process started, waiting for output...')
 
         try:
+            start_time = time.time()
             for line in iter(process.stdout.readline, ''):
                 if line.strip():  # Check if the line is not empty
                     logging.info(line.strip())  # Log each line as it becomes available
+                    if "✅ meeting ended" in line:
+                        logging.info("Meeting ended by host. Exiting...")
+                        break
                 else:
                     logging.debug("No output from zoomsdk process.")
+                
+                # Check if the meeting time has elapsed
+                if (time.time() - start_time) >= (end_time * 60):
+                    logging.info("Meeting time is over. Exiting...")
+                    break
+
         except KeyboardInterrupt:
             logging.info("Force Exiting Meeting.")
         finally:
-            process.terminate()
-            process.wait()
+            # Ensure the process is terminated
+            if process.poll() is None:  # Check if the process is still running
+                process.terminate()
+                try:
+                    process.wait(timeout=10)  # Wait for the process to terminate
+                except subprocess.TimeoutExpired:
+                    logging.warning("Process did not terminate in time, killing it.")
+                    process.kill()
+                    process.wait()
+                logging.info("Subprocess terminated after meeting time ended or host ended the meeting.")
 
         # Check if the process had any errors
         stderr_output = process.stderr.read()
         if stderr_output:
             logging.error(f"Error output from process: {stderr_output}")
-
-        # Wait for the meeting to end
-        time.sleep(end_time * 60)
-        logging.info("Meeting time is over. Exiting...")
-
-        # Forcefully terminate the process if it's still running
-        if process.poll() is None:  # Check if the process is still running
-            process.kill()
-            process.wait()
-            logging.info("Subprocess forcefully terminated after meeting time ended.")
 
     except FileNotFoundError as fnf_error:
         logging.error(f"File not found error: {fnf_error}")
@@ -86,5 +94,5 @@ def join_zoom_meeting(meeting_url, password, end_time):
         logging.error(f"Unexpected error during meeting join: {e}")
     finally:
         logging.info("Exiting the meeting process")
-
-join_zoom_meeting('https://us05web.zoom.us/j/88104465816?pwd=Wj8C91CC4DqUtyyGRAwgjLjgOHDN8I.1','',0.2)
+    print('here')
+    return ""
