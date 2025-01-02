@@ -23,6 +23,6 @@ services:
       - ./zoom-sdk:/tmp/meeting-sdk-linux-sample
     ports:
       - "3101:3101"
-    entrypoint: ["/tini", "--", "./bin/entry.sh", "<meeting_number>", "<password>"]
+    entrypoint: ["/tini", "--", "./bin/entry.sh"]
     environment:
       - DEBIAN_FRONTEND=noninteractive

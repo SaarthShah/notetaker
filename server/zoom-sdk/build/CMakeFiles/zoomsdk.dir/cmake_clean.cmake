@@ -3,6 +3,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/zoomsdk.dir/src/Config.cpp.o.d"
   "CMakeFiles/zoomsdk.dir/src/Zoom.cpp.o"
   "CMakeFiles/zoomsdk.dir/src/Zoom.cpp.o.d"
+  "CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.o"
+  "CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.o.d"
   "CMakeFiles/zoomsdk.dir/src/events/AuthServiceEvent.cpp.o"
   "CMakeFiles/zoomsdk.dir/src/events/AuthServiceEvent.cpp.o.d"
   "CMakeFiles/zoomsdk.dir/src/events/MeetingRecordingCtrlEvent.cpp.o"
