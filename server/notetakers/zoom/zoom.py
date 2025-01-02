@@ -8,8 +8,8 @@ import pwd
 # Load environment variables
 load_dotenv()
 
-usernameStr = os.getenv("ZOOM_USERNAME")
-passwordStr = os.getenv("ZOOM_PASSWORD")
+client_id = os.getenv('ZOOM_CLIENT_ID')
+client_secret = os.getenv('ZOOM_CLIENT_SECRET')
 
 # Logger
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -31,7 +31,8 @@ def join_zoom_meeting(meeting_url, password, end_time):
         zoomuser_gid = zoomuser_info.pw_gid
 
         # Run the command as zoomuser without using sudo
-        command = f'/lib/zoomsdk --join-url "{meeting_url}"'
+        executable_path = "/app/zoom-sdk/build/zoomsdk"
+        command = f'{executable_path} --join-url "{meeting_url}" --client-id {client_id} --client-secret {client_secret}'
         logging.info(f"Running command: {command}")
 
         process = subprocess.Popen(
