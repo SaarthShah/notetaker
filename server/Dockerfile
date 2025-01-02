@@ -1,24 +1,106 @@
-# Use the official Python image from the Docker Hub
-FROM python:3.9-slim
+# Use the official Ubuntu base image
+FROM ubuntu:22.04 AS base
+
+SHELL ["/bin/bash", "-c"]
+
+# Set environment variables
+ENV project=meeting-sdk-linux-sample
+ENV cwd=/tmp/$project
 
 # Set the working directory in the container
-WORKDIR /app
+WORKDIR $cwd
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+ARG DEBIAN_FRONTEND=noninteractive
 
-# Install necessary packages, Chrome, and pulseaudio
+# Install system dependencies
 RUN apt-get update && \
-    apt-get install -y wget gnupg pulseaudio pulseaudio-utils && \
+    apt-get install -y \
+    build-essential \
+    ca-certificates \
+    cmake \
+    curl \
+    gdb \
+    git \
+    gfortran \
+    libopencv-dev \
+    libdbus-1-3 \
+    libgbm1 \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libglib2.0-dev \
+    libssl-dev \
+    libx11-dev \
+    libx11-xcb1 \
+    libxcb-image0 \
+    libxcb-keysyms1 \
+    libxcb-randr0 \
+    libxcb-shape0 \
+    libxcb-shm0 \
+    libxcb-xfixes0 \
+    libxcb-xtest0 \
+    libgl1-mesa-dri \
+    libxfixes3 \
+    linux-libc-dev \
+    pkgconf \
+    tar \
+    unzip \
+    zip \
+    ninja-build \
+    wget \
+    gnupg \
+    pulseaudio \
+    pulseaudio-utils \
+    python3-pip && \
     wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list' && \
     apt-get update && \
     apt-get install -y google-chrome-stable && \
-    pip install --no-cache-dir -r requirements.txt && \
     rm -rf /var/lib/apt/lists/*
+
+# Install ALSA
+RUN apt-get update && \
+    apt-get install -y libasound2 libasound2-plugins alsa-utils alsa-oss pulseaudio pulseaudio-utils
+
+# Copy the library files from zoom-sdk
+COPY zoom-sdk/lib /lib
+
+# Extract the Zoom SDK
+COPY zoom-sdk/lib/zoom-meeting-sdk-linux_x86_64-6.3.0.6019.tar.xz /tmp/
+RUN mkdir -p /lib/zoomsdk/ && \
+    tar -xvf /tmp/zoom-meeting-sdk-linux_x86_64-6.3.0.6019.tar.xz -C /lib/zoomsdk
+
+FROM base AS deps
+
+ENV VCPKG_FORCE_SYSTEM_BINARIES=1
+
+ENV TINI_VERSION v0.19.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+
+WORKDIR /opt
+RUN git clone --depth 1 https://github.com/Microsoft/vcpkg.git && \
+    ./vcpkg/bootstrap-vcpkg.sh -disableMetrics && \
+    ln -s /opt/vcpkg/vcpkg /usr/local/bin/vcpkg && \
+    vcpkg install vcpkg-cmake ada-url cli11 jwt-cpp
+
+FROM deps AS build
+
+ENV VCPKG_FORCE_SYSTEM_BINARIES=1
+
+WORKDIR /app
+
+# Copy the entire project directory into the Docker image
+COPY . /app
+
+# Install Python dependencies
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Compile the API server
+WORKDIR /app
+RUN cmake -B build -S /app/zoom-sdk -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake && cmake --build build
 
 # Expose the port that the app runs on
 EXPOSE 7099
 
-# Start pulseaudio and the application
-# CMD ["bash", "-c", "pulseaudio --start && uvicorn notetakers.app:app --host 0.0.0.0 --port 7099 --reload"]
+# Start pulseaudio, run entry.sh, and then start the application
+CMD ["bash", "-c", "pulseaudio --start && /tini -- ./bin/entry.sh && uvicorn notetakers.app:app --host 0.0.0.0 --port 7099 --reload"]
