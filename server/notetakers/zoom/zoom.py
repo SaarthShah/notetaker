@@ -47,21 +47,17 @@ def join_zoom_meeting(meeting_url, password, end_time):
 
         logging.info('Process started, waiting for output...')
 
-        # Stream the output to a text file
-        output_file_path = "zoomsdk_output.txt"
-        with open(output_file_path, "w") as output_file:
-            try:
-                for line in iter(process.stdout.readline, ''):
-                    if line.strip():  # Check if the line is not empty
-                        logging.info(line.strip())  # Log each line as it becomes available
-                        output_file.write(line)  # Write each line to the file
-                    else:
-                        logging.debug("No output from zoomsdk process.")
-            except KeyboardInterrupt:
-                logging.info("Force Exiting Meeting.")
-            finally:
-                process.terminate()
-                process.wait()
+        try:
+            for line in iter(process.stdout.readline, ''):
+                if line.strip():  # Check if the line is not empty
+                    logging.info(line.strip())  # Log each line as it becomes available
+                else:
+                    logging.debug("No output from zoomsdk process.")
+        except KeyboardInterrupt:
+            logging.info("Force Exiting Meeting.")
+        finally:
+            process.terminate()
+            process.wait()
 
         # Check if the process had any errors
         stderr_output = process.stderr.read()
