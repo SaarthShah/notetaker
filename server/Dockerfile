@@ -67,7 +67,20 @@ COPY zoom-sdk/lib /lib
 # Extract the Zoom SDK
 COPY zoom-sdk/lib/zoom-meeting-sdk-linux_x86_64-6.3.0.6019.tar.xz /tmp/
 RUN mkdir -p /lib/zoomsdk/ && \
-    tar -xvf /tmp/zoom-meeting-sdk-linux_x86_64-6.3.0.6019.tar.xz -C /lib/zoomsdk
+    tar -xvf /tmp/zoom-meeting-sdk-linux_x86_64-6.3.0.6019.tar.xz -C /lib/zoomsdk || true
+
+# Symlink libmeetingsdk.so.1 to libmeetingsdk.so
+RUN ln -sf /lib/zoomsdk/libmeetingsdk.so /lib/zoomsdk/libmeetingsdk.so.1
+
+# Add /lib/zoomsdk to ld.so.conf and refresh the linker cache
+RUN echo "/lib/zoomsdk" >> /etc/ld.so.conf.d/zoomsdk.conf && ldconfig
+
+# Create a user named zoomuser
+RUN id -u zoomuser &>/dev/null || useradd -m zoomuser
+
+# Change ownership of the /lib/zoomsdk directory to zoomuser
+RUN chown -R zoomuser:zoomuser /lib/zoomsdk && \
+    find /lib/zoomsdk -type f -exec chmod +x {} \; || true
 
 FROM base AS deps
 
@@ -92,15 +105,19 @@ WORKDIR /app
 # Copy the entire project directory into the Docker image
 COPY . /app
 
+# Ensure the zoomuser exists in the final stage
+RUN id -u zoomuser &>/dev/null || useradd -m zoomuser
+
 # Install Python dependencies
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Compile the API server
-WORKDIR /app
+# Compile the API server as root to avoid permission issues
+USER root
 RUN cmake -B build -S /app/zoom-sdk -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake && cmake --build build
 
 # Expose the port that the app runs on
 EXPOSE 7099
 
-# Start pulseaudio, run entry.sh, and then start the application
-CMD ["bash", "-c", "pulseaudio --start && /tini -- ./bin/entry.sh && uvicorn notetakers.app:app --host 0.0.0.0 --port 7099 --reload"]
+# Start pulseaudio as zoomuser, run entry.sh, and then start the application as zoomuser
+USER zoomuser
+CMD ["bash", "-c", "pulseaudio --start && /tini -- ./lib/bin/entry.sh && uvicorn notetakers.app:app --host 0.0.0.0 --port 7099 --reload"]

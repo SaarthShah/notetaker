@@ -3,6 +3,7 @@ import os
 import time
 from dotenv import load_dotenv
 import subprocess
+import pwd
 
 # Load environment variables
 load_dotenv()
@@ -24,7 +25,12 @@ def join_zoom_meeting(meeting_url, password, end_time):
         else:
             raise FileNotFoundError(f"{zoomsdk_path} is not a directory")
 
-        # Run the command instead of executing the binary
+        # Get the UID and GID for zoomuser
+        zoomuser_info = pwd.getpwnam('zoomuser')
+        zoomuser_uid = zoomuser_info.pw_uid
+        zoomuser_gid = zoomuser_info.pw_gid
+
+        # Run the command as zoomuser without using sudo
         command = f'/lib/zoomsdk --join-url "{meeting_url}"'
         logging.info(f"Running command: {command}")
 
@@ -34,7 +40,8 @@ def join_zoom_meeting(meeting_url, password, end_time):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,  # Ensures the output is decoded into text instead of bytes
-            bufsize=1  # Line buffering
+            bufsize=1,  # Line buffering
+            preexec_fn=lambda: os.setgid(zoomuser_gid) or os.setuid(zoomuser_uid)
         )
 
         logging.info('Process started, waiting for output...')
@@ -83,4 +90,4 @@ def join_zoom_meeting(meeting_url, password, end_time):
     finally:
         logging.info("Exiting the meeting process")
 
-join_zoom_meeting('https://us05web.zoom.us/j/88104465816?pwd=Wj8C91CC4DqUtyyGRAwgjLjgOHDN8I.1','',2)
+join_zoom_meeting('https://us05web.zoom.us/j/88104465816?pwd=Wj8C91CC4DqUtyyGRAwgjLjgOHDN8I.1','',0.2)
