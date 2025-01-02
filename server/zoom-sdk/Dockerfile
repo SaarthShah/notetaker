@@ -9,7 +9,7 @@ WORKDIR $cwd
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-#  Install Dependencies
+# Install Dependencies
 RUN apt-get update  \
     && apt-get install -y \
     build-essential \
@@ -69,11 +69,19 @@ WORKDIR /opt
 RUN git clone --depth 1 https://github.com/Microsoft/vcpkg.git \
     && ./vcpkg/bootstrap-vcpkg.sh -disableMetrics \
     && ln -s /opt/vcpkg/vcpkg /usr/local/bin/vcpkg \
-    && vcpkg install vcpkg-cmake
+    && vcpkg install vcpkg-cmake crow ada-url cli11 jwt-cpp asio
 
 FROM deps AS build
 
 ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 
 WORKDIR $cwd
+
+# Copy the entire project directory into the Docker image
+COPY . $cwd
+
+# Compile the API server with Crow for C++
+RUN cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_PREFIX_PATH="/opt/vcpkg/installed/x64-linux/share/crow;/opt/vcpkg/installed/x64-linux/share/asio" && cmake --build build
+
+# Set the entry point to start the API server
 ENTRYPOINT ["/tini", "--", "./bin/entry.sh"]

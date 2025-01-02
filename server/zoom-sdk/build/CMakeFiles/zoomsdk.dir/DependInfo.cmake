@@ -10,6 +10,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/tmp/meeting-sdk-linux-sample/src/Config.cpp" "CMakeFiles/zoomsdk.dir/src/Config.cpp.o" "gcc" "CMakeFiles/zoomsdk.dir/src/Config.cpp.o.d"
   "/tmp/meeting-sdk-linux-sample/src/Zoom.cpp" "CMakeFiles/zoomsdk.dir/src/Zoom.cpp.o" "gcc" "CMakeFiles/zoomsdk.dir/src/Zoom.cpp.o.d"
+  "/tmp/meeting-sdk-linux-sample/src/ZoomApi.cpp" "CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.o" "gcc" "CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.o.d"
   "/tmp/meeting-sdk-linux-sample/src/events/AuthServiceEvent.cpp" "CMakeFiles/zoomsdk.dir/src/events/AuthServiceEvent.cpp.o" "gcc" "CMakeFiles/zoomsdk.dir/src/events/AuthServiceEvent.cpp.o.d"
   "/tmp/meeting-sdk-linux-sample/src/events/MeetingRecordingCtrlEvent.cpp" "CMakeFiles/zoomsdk.dir/src/events/MeetingRecordingCtrlEvent.cpp.o" "gcc" "CMakeFiles/zoomsdk.dir/src/events/MeetingRecordingCtrlEvent.cpp.o.d"
   "/tmp/meeting-sdk-linux-sample/src/events/MeetingReminderEvent.cpp" "CMakeFiles/zoomsdk.dir/src/events/MeetingReminderEvent.cpp.o" "gcc" "CMakeFiles/zoomsdk.dir/src/events/MeetingReminderEvent.cpp.o.d"

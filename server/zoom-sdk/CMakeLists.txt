@@ -10,9 +10,11 @@ set(CMAKE_SYSTEM_PROCESSOR x86_64)
 
 set(ZOOM_SDK /lib/zoomsdk)
 
-find_package(ada REQUIRED)
-find_package(CLI11 REQUIRED)
-find_path(JWT_CPP_INCLUDE_DIRS "jwt-cpp/base.h")
+find_package(ada CONFIG REQUIRED)
+find_package(CLI11 CONFIG REQUIRED)
+find_package(jwt-cpp CONFIG REQUIRED)
+find_package(Crow CONFIG REQUIRED)
+find_package(asio CONFIG REQUIRED)
 
 find_package(X11 REQUIRED)
 include_directories(${X11_INCLUDE_DIR})
@@ -21,8 +23,8 @@ link_directories(${X11_LIBRARIES})
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(deps REQUIRED IMPORTED_TARGET glib-2.0)
 
-find_package( OpenCV REQUIRED )
-include_directories( ${OpenCV_INCLUDE_DIRS} )
+find_package(OpenCV REQUIRED)
+include_directories(${OpenCV_INCLUDE_DIRS})
 
 include_directories(${ZOOM_SDK}/h)
 link_directories(${ZOOM_SDK} ${ZOOM_SDK})
@@ -32,6 +34,7 @@ add_executable(zoomsdk src/main.cpp
        src/Zoom.cpp
         src/Zoom.h
         src/Config.cpp
+        src/ZoomApi.cpp
         src/Config.h
         src/util/Singleton.h
         src/util/Log.h
@@ -53,12 +56,4 @@ add_executable(zoomsdk src/main.cpp
         src/util/SocketServer.cpp
 )
 
-
-target_include_directories(zoomsdk PRIVATE ${JWT_CPP_INCLUDE_DIRS})
-target_link_libraries(zoomsdk PRIVATE meetingsdk ada::ada CLI11::CLI11 PkgConfig::deps ${OpenCV_LIBS} ${X11_LIBRARIES})
-
-
-
-
-
-
+target_link_libraries(zoomsdk PRIVATE meetingsdk ada::ada CLI11::CLI11 jwt-cpp::jwt-cpp Crow::Crow PkgConfig::deps ${OpenCV_LIBS} ${X11_LIBRARIES} asio::asio)
