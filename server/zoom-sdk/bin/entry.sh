@@ -54,10 +54,10 @@ build() {
 }
 
 run() {
-    exec ./"$BUILD"/zoomsdk --help;
+    exec ./"$BUILD"/zoomsdk --join-url "https://us05web.zoom.us/j/89084240590?pwd=fjL46aThAEd6RfBa0vWHy6QeeTNsXM.1"
 }
 
-build && run;
+build ;
 
 exit $?
 
