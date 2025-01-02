@@ -9,46 +9,51 @@ load_dotenv()
 
 usernameStr = os.getenv("ZOOM_USERNAME")
 passwordStr = os.getenv("ZOOM_PASSWORD")
-k = 0
-audio = k
 
 # Logger
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+                    level=logging.DEBUG)  # Set to DEBUG to capture more detailed logs
 
 def join_zoom_meeting(meeting_url, password, end_time):
+    logging.debug("join_zoom_meeting function called")
     try:
-        # Check if the zoomsdk directory exists and list its contents
+        # Check if the zoomsdk directory exists
         zoomsdk_path = '/lib/zoomsdk'
         if os.path.isdir(zoomsdk_path):
             logging.info("Starting meeting")
         else:
             raise FileNotFoundError(f"{zoomsdk_path} is not a directory")
 
-        # Ensure all files in the zoomsdk directory are executable
-        for root, dirs, files in os.walk(zoomsdk_path):
-            for file in files:
-                file_path = os.path.join(root, file)
-                subprocess.run(['chmod', '+x', file_path], check=True)
+        # Run the command instead of executing the binary
+        command = f'/lib/zoomsdk --join-url "{meeting_url}"'
+        logging.info(f"Running command: {command}")
 
-        # Execute the zoomsdk binary with the provided meeting URL
-        zoomsdk_binary = os.path.join(zoomsdk_path, 'libmeetingsdk.so')  # Assuming this is the binary to execute
         process = subprocess.Popen(
-            [zoomsdk_binary, '--join-url', meeting_url],
+            command,
+            shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True  # Ensures the output is decoded into text instead of bytes
+            text=True,  # Ensures the output is decoded into text instead of bytes
+            bufsize=1  # Line buffering
         )
 
-        # Stream the output
-        try:
-            for line in iter(process.stdout.readline, ''):
-                logging.info(line.strip())  # Log each line as it becomes available
-        except KeyboardInterrupt:
-            logging.info("Force Exiting Meeting.")
-        finally:
-            process.terminate()
-            process.wait()
+        logging.info('Process started, waiting for output...')
+
+        # Stream the output to a text file
+        output_file_path = "zoomsdk_output.txt"
+        with open(output_file_path, "w") as output_file:
+            try:
+                for line in iter(process.stdout.readline, ''):
+                    if line.strip():  # Check if the line is not empty
+                        logging.info(line.strip())  # Log each line as it becomes available
+                        output_file.write(line)  # Write each line to the file
+                    else:
+                        logging.debug("No output from zoomsdk process.")
+            except KeyboardInterrupt:
+                logging.info("Force Exiting Meeting.")
+            finally:
+                process.terminate()
+                process.wait()
 
         # Check if the process had any errors
         stderr_output = process.stderr.read()
@@ -78,4 +83,4 @@ def join_zoom_meeting(meeting_url, password, end_time):
     finally:
         logging.info("Exiting the meeting process")
 
-join_zoom_meeting('https://us05web.zoom.us/j/88104465816?pwd=Wj8C91CC4DqUtyyGRAwgjLjgOHDN8I.1','',0.2)
+join_zoom_meeting('https://us05web.zoom.us/j/88104465816?pwd=Wj8C91CC4DqUtyyGRAwgjLjgOHDN8I.1','',2)

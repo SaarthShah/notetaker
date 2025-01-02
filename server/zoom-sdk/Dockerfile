@@ -48,7 +48,7 @@ RUN apt-get update  \
 RUN apt-get install -y libasound2 libasound2-plugins alsa alsa-utils alsa-oss
 
 # Install Pulseaudio
-RUN apt-get install -y  pulseaudio pulseaudio-utils
+RUN apt-get install -y pulseaudio pulseaudio-utils
 
 COPY lib /lib
 
@@ -56,6 +56,10 @@ COPY lib/zoom-meeting-sdk-linux_x86_64-6.3.0.6019.tar.xz /tmp/
 
 RUN mkdir -p /lib/zoomsdk/ && \
     tar -xvf /tmp/zoom-meeting-sdk-linux_x86_64-6.3.0.6019.tar.xz -C /lib/zoomsdk
+
+# Change ownership to a non-root user and make files executable
+RUN useradd -m zoomuser && chown -R zoomuser:zoomuser /lib/zoomsdk && \
+    find /lib/zoomsdk -type f -exec chmod +x {} \;
 
 FROM base AS deps
 
@@ -84,4 +88,5 @@ COPY . $cwd
 RUN cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake && cmake --build build
 
 # Set the entry point to start the API server
+USER zoomuser
 ENTRYPOINT ["/tini", "--", "./bin/entry.sh"]
