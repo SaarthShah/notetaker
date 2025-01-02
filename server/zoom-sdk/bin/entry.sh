@@ -54,7 +54,7 @@ build() {
 }
 
 run() {
-    exec ./"$BUILD"/zoomsdk
+    exec ./"$BUILD"/zoomsdk --help;
 }
 
 build && run;

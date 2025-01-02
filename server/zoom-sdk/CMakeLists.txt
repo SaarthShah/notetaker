@@ -13,8 +13,6 @@ set(ZOOM_SDK /lib/zoomsdk)
 find_package(ada CONFIG REQUIRED)
 find_package(CLI11 CONFIG REQUIRED)
 find_package(jwt-cpp CONFIG REQUIRED)
-find_package(Crow CONFIG REQUIRED)
-find_package(asio CONFIG REQUIRED)
 
 find_package(X11 REQUIRED)
 include_directories(${X11_INCLUDE_DIR})
@@ -34,7 +32,6 @@ add_executable(zoomsdk src/main.cpp
        src/Zoom.cpp
         src/Zoom.h
         src/Config.cpp
-        src/ZoomApi.cpp
         src/Config.h
         src/util/Singleton.h
         src/util/Log.h
@@ -56,4 +53,4 @@ add_executable(zoomsdk src/main.cpp
         src/util/SocketServer.cpp
 )
 
-target_link_libraries(zoomsdk PRIVATE meetingsdk ada::ada CLI11::CLI11 jwt-cpp::jwt-cpp Crow::Crow PkgConfig::deps ${OpenCV_LIBS} ${X11_LIBRARIES} asio::asio)
+target_link_libraries(zoomsdk PRIVATE meetingsdk ada::ada CLI11::CLI11 jwt-cpp::jwt-cpp PkgConfig::deps ${OpenCV_LIBS} ${X11_LIBRARIES})

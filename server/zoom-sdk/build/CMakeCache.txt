@@ -230,8 +230,23 @@ CMAKE_TOOLCHAIN_FILE:FILEPATH=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
 // Studio IDE projects all commands are done without /nologo.
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
+//The directory containing a CMake configuration file for Crow.
+Crow_DIR:PATH=Crow_DIR-NOTFOUND
+
 //Path to a file.
 JWT_CPP_INCLUDE_DIRS:PATH=/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/include
+
+//Path to a library.
+OPENSSL_CRYPTO_LIBRARY:FILEPATH=/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/lib/libcrypto.a
+
+//Path to a library.
+OPENSSL_DL_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libdl.a
+
+//Path to a file.
+OPENSSL_INCLUDE_DIR:PATH=/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/include
+
+//Path to a library.
+OPENSSL_SSL_LIBRARY:FILEPATH=/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/lib/libssl.a
 
 //The directory containing a CMake configuration file for OpenCV.
 OpenCV_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/opencv4
@@ -541,6 +556,12 @@ _VCPKG_INSTALLED_DIR:PATH=/tmp/meeting-sdk-linux-sample/build/vcpkg_installed
 //The directory containing a CMake configuration file for ada.
 ada_DIR:PATH=/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/share/ada
 
+//The directory containing a CMake configuration file for asio.
+asio_DIR:PATH=asio_DIR-NOTFOUND
+
+//The directory containing a CMake configuration file for jwt-cpp.
+jwt-cpp_DIR:PATH=/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/share/jwt-cpp
+
 //Value Computed by CMake
 meeting_sdk_linux_sample_BINARY_DIR:STATIC=/tmp/meeting-sdk-linux-sample/build
 
@@ -549,6 +570,15 @@ meeting_sdk_linux_sample_IS_TOP_LEVEL:STATIC=ON
 
 //Value Computed by CMake
 meeting_sdk_linux_sample_SOURCE_DIR:STATIC=/tmp/meeting-sdk-linux-sample
+
+//Path to a library.
+pkgcfg_lib__OPENSSL_crypto:FILEPATH=/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/lib/libcrypto.a
+
+//Path to a library.
+pkgcfg_lib__OPENSSL_dl:FILEPATH=/usr/lib/x86_64-linux-gnu/libdl.a
+
+//Path to a library.
+pkgcfg_lib__OPENSSL_ssl:FILEPATH=/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/lib/libssl.a
 
 //Path to a library.
 pkgcfg_lib_deps_glib-2.0:FILEPATH=/usr/lib/x86_64-linux-gnu/libglib-2.0.so
@@ -640,6 +670,10 @@ CMAKE_GENERATOR_TOOLSET:INTERNAL=
 CMAKE_HAVE_CONNECT:INTERNAL=1
 //Have function gethostbyname
 CMAKE_HAVE_GETHOSTBYNAME:INTERNAL=1
+//Test CMAKE_HAVE_LIBC_PTHREAD
+CMAKE_HAVE_LIBC_PTHREAD:INTERNAL=1
+//Have include pthread.h
+CMAKE_HAVE_PTHREAD_H:INTERNAL=1
 //Have function remove
 CMAKE_HAVE_REMOVE:INTERNAL=1
 //Have function shmat
@@ -713,10 +747,20 @@ CMAKE_UNAME:INTERNAL=/usr/bin/uname
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
 //Details about finding OpenCV
 FIND_PACKAGE_MESSAGE_DETAILS_OpenCV:INTERNAL=[/usr][v4.5.4()]
+//Details about finding OpenSSL
+FIND_PACKAGE_MESSAGE_DETAILS_OpenSSL:INTERNAL=[/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/lib/libcrypto.a][/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/include][c ][v3.4.0()]
 //Details about finding PkgConfig
 FIND_PACKAGE_MESSAGE_DETAILS_PkgConfig:INTERNAL=[/usr/bin/pkg-config][v1.8.0()]
+//Details about finding Threads
+FIND_PACKAGE_MESSAGE_DETAILS_Threads:INTERNAL=[TRUE][v()]
 //Details about finding X11
 FIND_PACKAGE_MESSAGE_DETAILS_X11:INTERNAL=[/usr/include][/usr/lib/x86_64-linux-gnu/libX11.so][c ][v()]
+//ADVANCED property for variable: OPENSSL_CRYPTO_LIBRARY
+OPENSSL_CRYPTO_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: OPENSSL_INCLUDE_DIR
+OPENSSL_INCLUDE_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: OPENSSL_SSL_LIBRARY
+OPENSSL_SSL_LIBRARY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: PKG_CONFIG_ARGN
 PKG_CONFIG_ARGN-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: PKG_CONFIG_EXECUTABLE
@@ -883,7 +927,44 @@ X11_xkbfile_LIB-ADVANCED:INTERNAL=1
 Z_VCPKG_CHECK_MANIFEST_MODE:INTERNAL=ON
 //Vcpkg root directory
 Z_VCPKG_ROOT_DIR:INTERNAL=/opt/vcpkg
+_OPENSSL_CFLAGS:INTERNAL=-I/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/lib/pkgconfig/../../include
+_OPENSSL_CFLAGS_I:INTERNAL=
+_OPENSSL_CFLAGS_OTHER:INTERNAL=
+_OPENSSL_FOUND:INTERNAL=1
+_OPENSSL_INCLUDEDIR:INTERNAL=/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/lib/pkgconfig/../../include
+_OPENSSL_INCLUDE_DIRS:INTERNAL=/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/lib/pkgconfig/../../include
+_OPENSSL_LDFLAGS:INTERNAL=-L/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/lib/pkgconfig/../../lib;-lssl;-lcrypto;-ldl;-pthread
+_OPENSSL_LDFLAGS_OTHER:INTERNAL=-pthread
+_OPENSSL_LIBDIR:INTERNAL=/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/lib/pkgconfig/../../lib
+_OPENSSL_LIBRARIES:INTERNAL=ssl;crypto;dl
+_OPENSSL_LIBRARY_DIRS:INTERNAL=/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/lib/pkgconfig/../../lib
+_OPENSSL_LIBS:INTERNAL=
+_OPENSSL_LIBS_L:INTERNAL=
+_OPENSSL_LIBS_OTHER:INTERNAL=
+_OPENSSL_LIBS_PATHS:INTERNAL=
+_OPENSSL_MODULE_NAME:INTERNAL=openssl
+_OPENSSL_PREFIX:INTERNAL=/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/lib/pkgconfig/../..
+_OPENSSL_STATIC_CFLAGS:INTERNAL=-I/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/lib/pkgconfig/../../include
+_OPENSSL_STATIC_CFLAGS_I:INTERNAL=
+_OPENSSL_STATIC_CFLAGS_OTHER:INTERNAL=
+_OPENSSL_STATIC_INCLUDE_DIRS:INTERNAL=/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/lib/pkgconfig/../../include
+_OPENSSL_STATIC_LDFLAGS:INTERNAL=-L/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/lib/pkgconfig/../../lib;-lssl;-lcrypto;-ldl;-pthread
+_OPENSSL_STATIC_LDFLAGS_OTHER:INTERNAL=-pthread
+_OPENSSL_STATIC_LIBDIR:INTERNAL=
+_OPENSSL_STATIC_LIBRARIES:INTERNAL=ssl;crypto;dl
+_OPENSSL_STATIC_LIBRARY_DIRS:INTERNAL=/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/lib/pkgconfig/../../lib
+_OPENSSL_STATIC_LIBS:INTERNAL=
+_OPENSSL_STATIC_LIBS_L:INTERNAL=
+_OPENSSL_STATIC_LIBS_OTHER:INTERNAL=
+_OPENSSL_STATIC_LIBS_PATHS:INTERNAL=
+_OPENSSL_VERSION:INTERNAL=3.4.0
+_OPENSSL_openssl_INCLUDEDIR:INTERNAL=
+_OPENSSL_openssl_LIBDIR:INTERNAL=
+_OPENSSL_openssl_PREFIX:INTERNAL=
+_OPENSSL_openssl_VERSION:INTERNAL=
+__pkg_config_arguments__OPENSSL:INTERNAL=QUIET;openssl
 __pkg_config_arguments_deps:INTERNAL=REQUIRED;IMPORTED_TARGET;glib-2.0
+__pkg_config_checked__OPENSSL:INTERNAL=1
 __pkg_config_checked_deps:INTERNAL=1
 deps_CFLAGS:INTERNAL=-I/usr/include/glib-2.0;-I/usr/lib/x86_64-linux-gnu/glib-2.0/include
 deps_CFLAGS_I:INTERNAL=
@@ -920,7 +1001,13 @@ deps_glib-2.0_INCLUDEDIR:INTERNAL=
 deps_glib-2.0_LIBDIR:INTERNAL=
 deps_glib-2.0_PREFIX:INTERNAL=
 deps_glib-2.0_VERSION:INTERNAL=
+//ADVANCED property for variable: pkgcfg_lib__OPENSSL_crypto
+pkgcfg_lib__OPENSSL_crypto-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: pkgcfg_lib__OPENSSL_dl
+pkgcfg_lib__OPENSSL_dl-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: pkgcfg_lib__OPENSSL_ssl
+pkgcfg_lib__OPENSSL_ssl-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: pkgcfg_lib_deps_glib-2.0
 pkgcfg_lib_deps_glib-2.0-ADVANCED:INTERNAL=1
-prefix_result:INTERNAL=/usr/lib/x86_64-linux-gnu
+prefix_result:INTERNAL=/tmp/meeting-sdk-linux-sample/build/vcpkg_installed/x64-linux/lib/pkgconfig/../../lib
 

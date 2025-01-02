@@ -111,24 +111,10 @@ CMakeFiles/zoomsdk.dir/src/Config.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/zoomsdk.dir/src/Config.cpp.s"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /tmp/meeting-sdk-linux-sample/src/Config.cpp -o CMakeFiles/zoomsdk.dir/src/Config.cpp.s
 
-CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.o: CMakeFiles/zoomsdk.dir/flags.make
-CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.o: ../src/ZoomApi.cpp
-CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.o: CMakeFiles/zoomsdk.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/tmp/meeting-sdk-linux-sample/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.o"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.o -MF CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.o.d -o CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.o -c /tmp/meeting-sdk-linux-sample/src/ZoomApi.cpp
-
-CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.i"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /tmp/meeting-sdk-linux-sample/src/ZoomApi.cpp > CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.i
-
-CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.s"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /tmp/meeting-sdk-linux-sample/src/ZoomApi.cpp -o CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.s
-
 CMakeFiles/zoomsdk.dir/src/events/AuthServiceEvent.cpp.o: CMakeFiles/zoomsdk.dir/flags.make
 CMakeFiles/zoomsdk.dir/src/events/AuthServiceEvent.cpp.o: ../src/events/AuthServiceEvent.cpp
 CMakeFiles/zoomsdk.dir/src/events/AuthServiceEvent.cpp.o: CMakeFiles/zoomsdk.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/tmp/meeting-sdk-linux-sample/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/zoomsdk.dir/src/events/AuthServiceEvent.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/tmp/meeting-sdk-linux-sample/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/zoomsdk.dir/src/events/AuthServiceEvent.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/zoomsdk.dir/src/events/AuthServiceEvent.cpp.o -MF CMakeFiles/zoomsdk.dir/src/events/AuthServiceEvent.cpp.o.d -o CMakeFiles/zoomsdk.dir/src/events/AuthServiceEvent.cpp.o -c /tmp/meeting-sdk-linux-sample/src/events/AuthServiceEvent.cpp
 
 CMakeFiles/zoomsdk.dir/src/events/AuthServiceEvent.cpp.i: cmake_force
@@ -142,7 +128,7 @@ CMakeFiles/zoomsdk.dir/src/events/AuthServiceEvent.cpp.s: cmake_force
 CMakeFiles/zoomsdk.dir/src/events/MeetingServiceEvent.cpp.o: CMakeFiles/zoomsdk.dir/flags.make
 CMakeFiles/zoomsdk.dir/src/events/MeetingServiceEvent.cpp.o: ../src/events/MeetingServiceEvent.cpp
 CMakeFiles/zoomsdk.dir/src/events/MeetingServiceEvent.cpp.o: CMakeFiles/zoomsdk.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/tmp/meeting-sdk-linux-sample/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/zoomsdk.dir/src/events/MeetingServiceEvent.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/tmp/meeting-sdk-linux-sample/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/zoomsdk.dir/src/events/MeetingServiceEvent.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/zoomsdk.dir/src/events/MeetingServiceEvent.cpp.o -MF CMakeFiles/zoomsdk.dir/src/events/MeetingServiceEvent.cpp.o.d -o CMakeFiles/zoomsdk.dir/src/events/MeetingServiceEvent.cpp.o -c /tmp/meeting-sdk-linux-sample/src/events/MeetingServiceEvent.cpp
 
 CMakeFiles/zoomsdk.dir/src/events/MeetingServiceEvent.cpp.i: cmake_force
@@ -156,7 +142,7 @@ CMakeFiles/zoomsdk.dir/src/events/MeetingServiceEvent.cpp.s: cmake_force
 CMakeFiles/zoomsdk.dir/src/events/MeetingReminderEvent.cpp.o: CMakeFiles/zoomsdk.dir/flags.make
 CMakeFiles/zoomsdk.dir/src/events/MeetingReminderEvent.cpp.o: ../src/events/MeetingReminderEvent.cpp
 CMakeFiles/zoomsdk.dir/src/events/MeetingReminderEvent.cpp.o: CMakeFiles/zoomsdk.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/tmp/meeting-sdk-linux-sample/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/zoomsdk.dir/src/events/MeetingReminderEvent.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/tmp/meeting-sdk-linux-sample/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/zoomsdk.dir/src/events/MeetingReminderEvent.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/zoomsdk.dir/src/events/MeetingReminderEvent.cpp.o -MF CMakeFiles/zoomsdk.dir/src/events/MeetingReminderEvent.cpp.o.d -o CMakeFiles/zoomsdk.dir/src/events/MeetingReminderEvent.cpp.o -c /tmp/meeting-sdk-linux-sample/src/events/MeetingReminderEvent.cpp
 
 CMakeFiles/zoomsdk.dir/src/events/MeetingReminderEvent.cpp.i: cmake_force
@@ -170,7 +156,7 @@ CMakeFiles/zoomsdk.dir/src/events/MeetingReminderEvent.cpp.s: cmake_force
 CMakeFiles/zoomsdk.dir/src/events/MeetingRecordingCtrlEvent.cpp.o: CMakeFiles/zoomsdk.dir/flags.make
 CMakeFiles/zoomsdk.dir/src/events/MeetingRecordingCtrlEvent.cpp.o: ../src/events/MeetingRecordingCtrlEvent.cpp
 CMakeFiles/zoomsdk.dir/src/events/MeetingRecordingCtrlEvent.cpp.o: CMakeFiles/zoomsdk.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/tmp/meeting-sdk-linux-sample/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/zoomsdk.dir/src/events/MeetingRecordingCtrlEvent.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/tmp/meeting-sdk-linux-sample/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/zoomsdk.dir/src/events/MeetingRecordingCtrlEvent.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/zoomsdk.dir/src/events/MeetingRecordingCtrlEvent.cpp.o -MF CMakeFiles/zoomsdk.dir/src/events/MeetingRecordingCtrlEvent.cpp.o.d -o CMakeFiles/zoomsdk.dir/src/events/MeetingRecordingCtrlEvent.cpp.o -c /tmp/meeting-sdk-linux-sample/src/events/MeetingRecordingCtrlEvent.cpp
 
 CMakeFiles/zoomsdk.dir/src/events/MeetingRecordingCtrlEvent.cpp.i: cmake_force
@@ -184,7 +170,7 @@ CMakeFiles/zoomsdk.dir/src/events/MeetingRecordingCtrlEvent.cpp.s: cmake_force
 CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKAudioRawDataDelegate.cpp.o: CMakeFiles/zoomsdk.dir/flags.make
 CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKAudioRawDataDelegate.cpp.o: ../src/raw_record/ZoomSDKAudioRawDataDelegate.cpp
 CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKAudioRawDataDelegate.cpp.o: CMakeFiles/zoomsdk.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/tmp/meeting-sdk-linux-sample/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKAudioRawDataDelegate.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/tmp/meeting-sdk-linux-sample/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKAudioRawDataDelegate.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKAudioRawDataDelegate.cpp.o -MF CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKAudioRawDataDelegate.cpp.o.d -o CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKAudioRawDataDelegate.cpp.o -c /tmp/meeting-sdk-linux-sample/src/raw_record/ZoomSDKAudioRawDataDelegate.cpp
 
 CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKAudioRawDataDelegate.cpp.i: cmake_force
@@ -198,7 +184,7 @@ CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKAudioRawDataDelegate.cpp.s: cmake_f
 CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKRendererDelegate.cpp.o: CMakeFiles/zoomsdk.dir/flags.make
 CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKRendererDelegate.cpp.o: ../src/raw_record/ZoomSDKRendererDelegate.cpp
 CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKRendererDelegate.cpp.o: CMakeFiles/zoomsdk.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/tmp/meeting-sdk-linux-sample/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKRendererDelegate.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/tmp/meeting-sdk-linux-sample/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKRendererDelegate.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKRendererDelegate.cpp.o -MF CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKRendererDelegate.cpp.o.d -o CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKRendererDelegate.cpp.o -c /tmp/meeting-sdk-linux-sample/src/raw_record/ZoomSDKRendererDelegate.cpp
 
 CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKRendererDelegate.cpp.i: cmake_force
@@ -212,7 +198,7 @@ CMakeFiles/zoomsdk.dir/src/raw_record/ZoomSDKRendererDelegate.cpp.s: cmake_force
 CMakeFiles/zoomsdk.dir/src/raw_send/ZoomSDKVideoSource.cpp.o: CMakeFiles/zoomsdk.dir/flags.make
 CMakeFiles/zoomsdk.dir/src/raw_send/ZoomSDKVideoSource.cpp.o: ../src/raw_send/ZoomSDKVideoSource.cpp
 CMakeFiles/zoomsdk.dir/src/raw_send/ZoomSDKVideoSource.cpp.o: CMakeFiles/zoomsdk.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/tmp/meeting-sdk-linux-sample/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/zoomsdk.dir/src/raw_send/ZoomSDKVideoSource.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/tmp/meeting-sdk-linux-sample/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/zoomsdk.dir/src/raw_send/ZoomSDKVideoSource.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/zoomsdk.dir/src/raw_send/ZoomSDKVideoSource.cpp.o -MF CMakeFiles/zoomsdk.dir/src/raw_send/ZoomSDKVideoSource.cpp.o.d -o CMakeFiles/zoomsdk.dir/src/raw_send/ZoomSDKVideoSource.cpp.o -c /tmp/meeting-sdk-linux-sample/src/raw_send/ZoomSDKVideoSource.cpp
 
 CMakeFiles/zoomsdk.dir/src/raw_send/ZoomSDKVideoSource.cpp.i: cmake_force
@@ -226,7 +212,7 @@ CMakeFiles/zoomsdk.dir/src/raw_send/ZoomSDKVideoSource.cpp.s: cmake_force
 CMakeFiles/zoomsdk.dir/src/util/SocketServer.cpp.o: CMakeFiles/zoomsdk.dir/flags.make
 CMakeFiles/zoomsdk.dir/src/util/SocketServer.cpp.o: ../src/util/SocketServer.cpp
 CMakeFiles/zoomsdk.dir/src/util/SocketServer.cpp.o: CMakeFiles/zoomsdk.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/tmp/meeting-sdk-linux-sample/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/zoomsdk.dir/src/util/SocketServer.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/tmp/meeting-sdk-linux-sample/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/zoomsdk.dir/src/util/SocketServer.cpp.o"
 	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/zoomsdk.dir/src/util/SocketServer.cpp.o -MF CMakeFiles/zoomsdk.dir/src/util/SocketServer.cpp.o.d -o CMakeFiles/zoomsdk.dir/src/util/SocketServer.cpp.o -c /tmp/meeting-sdk-linux-sample/src/util/SocketServer.cpp
 
 CMakeFiles/zoomsdk.dir/src/util/SocketServer.cpp.i: cmake_force
@@ -242,7 +228,6 @@ zoomsdk_OBJECTS = \
 "CMakeFiles/zoomsdk.dir/src/main.cpp.o" \
 "CMakeFiles/zoomsdk.dir/src/Zoom.cpp.o" \
 "CMakeFiles/zoomsdk.dir/src/Config.cpp.o" \
-"CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.o" \
 "CMakeFiles/zoomsdk.dir/src/events/AuthServiceEvent.cpp.o" \
 "CMakeFiles/zoomsdk.dir/src/events/MeetingServiceEvent.cpp.o" \
 "CMakeFiles/zoomsdk.dir/src/events/MeetingReminderEvent.cpp.o" \
@@ -258,7 +243,6 @@ zoomsdk_EXTERNAL_OBJECTS =
 zoomsdk: CMakeFiles/zoomsdk.dir/src/main.cpp.o
 zoomsdk: CMakeFiles/zoomsdk.dir/src/Zoom.cpp.o
 zoomsdk: CMakeFiles/zoomsdk.dir/src/Config.cpp.o
-zoomsdk: CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.o
 zoomsdk: CMakeFiles/zoomsdk.dir/src/events/AuthServiceEvent.cpp.o
 zoomsdk: CMakeFiles/zoomsdk.dir/src/events/MeetingServiceEvent.cpp.o
 zoomsdk: CMakeFiles/zoomsdk.dir/src/events/MeetingReminderEvent.cpp.o
@@ -306,6 +290,8 @@ zoomsdk: /usr/lib/x86_64-linux-gnu/libopencv_wechat_qrcode.so.4.5.4d
 zoomsdk: /usr/lib/x86_64-linux-gnu/libopencv_xobjdetect.so.4.5.4d
 zoomsdk: /usr/lib/x86_64-linux-gnu/libopencv_xphoto.so.4.5.4d
 zoomsdk: /usr/lib/x86_64-linux-gnu/libX11.so
+zoomsdk: vcpkg_installed/x64-linux/lib/libssl.a
+zoomsdk: vcpkg_installed/x64-linux/lib/libcrypto.a
 zoomsdk: /usr/lib/x86_64-linux-gnu/libglib-2.0.so
 zoomsdk: /usr/lib/x86_64-linux-gnu/libopencv_highgui.so.4.5.4d
 zoomsdk: /usr/lib/x86_64-linux-gnu/libopencv_datasets.so.4.5.4d
@@ -327,7 +313,7 @@ zoomsdk: /usr/lib/x86_64-linux-gnu/libopencv_photo.so.4.5.4d
 zoomsdk: /usr/lib/x86_64-linux-gnu/libopencv_imgproc.so.4.5.4d
 zoomsdk: /usr/lib/x86_64-linux-gnu/libopencv_core.so.4.5.4d
 zoomsdk: CMakeFiles/zoomsdk.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/tmp/meeting-sdk-linux-sample/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Linking CXX executable zoomsdk"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/tmp/meeting-sdk-linux-sample/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Linking CXX executable zoomsdk"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/zoomsdk.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

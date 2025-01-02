@@ -69,7 +69,7 @@ WORKDIR /opt
 RUN git clone --depth 1 https://github.com/Microsoft/vcpkg.git \
     && ./vcpkg/bootstrap-vcpkg.sh -disableMetrics \
     && ln -s /opt/vcpkg/vcpkg /usr/local/bin/vcpkg \
-    && vcpkg install vcpkg-cmake crow ada-url cli11 jwt-cpp asio
+    && vcpkg install vcpkg-cmake ada-url cli11 jwt-cpp
 
 FROM deps AS build
 
@@ -80,8 +80,8 @@ WORKDIR $cwd
 # Copy the entire project directory into the Docker image
 COPY . $cwd
 
-# Compile the API server with Crow for C++
-RUN cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_PREFIX_PATH="/opt/vcpkg/installed/x64-linux/share/crow;/opt/vcpkg/installed/x64-linux/share/asio" && cmake --build build
+# Compile the API server
+RUN cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake && cmake --build build
 
 # Set the entry point to start the API server
 ENTRYPOINT ["/tini", "--", "./bin/entry.sh"]

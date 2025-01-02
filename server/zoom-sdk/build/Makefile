@@ -177,30 +177,6 @@ src/Zoom.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/zoomsdk.dir/build.make CMakeFiles/zoomsdk.dir/src/Zoom.cpp.s
 .PHONY : src/Zoom.cpp.s
 
-src/ZoomApi.o: src/ZoomApi.cpp.o
-.PHONY : src/ZoomApi.o
-
-# target to build an object file
-src/ZoomApi.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/zoomsdk.dir/build.make CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.o
-.PHONY : src/ZoomApi.cpp.o
-
-src/ZoomApi.i: src/ZoomApi.cpp.i
-.PHONY : src/ZoomApi.i
-
-# target to preprocess a source file
-src/ZoomApi.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/zoomsdk.dir/build.make CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.i
-.PHONY : src/ZoomApi.cpp.i
-
-src/ZoomApi.s: src/ZoomApi.cpp.s
-.PHONY : src/ZoomApi.s
-
-# target to generate assembly for a file
-src/ZoomApi.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/zoomsdk.dir/build.make CMakeFiles/zoomsdk.dir/src/ZoomApi.cpp.s
-.PHONY : src/ZoomApi.cpp.s
-
 src/events/AuthServiceEvent.o: src/events/AuthServiceEvent.cpp.o
 .PHONY : src/events/AuthServiceEvent.o
 
@@ -432,9 +408,6 @@ help:
 	@echo "... src/Zoom.o"
 	@echo "... src/Zoom.i"
 	@echo "... src/Zoom.s"
-	@echo "... src/ZoomApi.o"
-	@echo "... src/ZoomApi.i"
-	@echo "... src/ZoomApi.s"
 	@echo "... src/events/AuthServiceEvent.o"
 	@echo "... src/events/AuthServiceEvent.i"
 	@echo "... src/events/AuthServiceEvent.s"
