@@ -4,6 +4,7 @@ import time
 from dotenv import load_dotenv
 import subprocess
 import pwd
+import signal
 
 # Load environment variables
 load_dotenv()
@@ -46,53 +47,47 @@ def join_zoom_meeting(meeting_url, end_time):
         )
 
         logging.info('Process started, waiting for output...')
+        start_time = time.time()
 
-        try:
-            start_time = time.time()
-            for line in iter(process.stdout.readline, ''):
-                if line.strip():  # Check if the line is not empty
-                    logging.info(line.strip())  # Log each line as it becomes available
-                    if "✅ meeting ended" in line:
-                        logging.info("Meeting ended by host. Exiting...")
-                        break
-                else:
-                    logging.debug("No output from zoomsdk process.")
-                
-                # Check if the meeting time has elapsed
-                if (time.time() - start_time) >= (end_time * 60):
-                    logging.info("Meeting time is over. Exiting...")
+        # Read stdout line-by-line in a loop (if you still want real-time logs)
+        while True:
+            line = process.stdout.readline()
+            # If line is empty and the process has ended, break out
+            if not line and process.poll() is not None:
+                break
+            if line.strip():
+                logging.info(line.strip())
+                if "✅ meeting ended" in line:
+                    logging.info("Meeting ended by host. Exiting...")
+                    process.send_signal(signal.SIGINT)  # Send Ctrl+C
                     break
 
-        except KeyboardInterrupt:
-            logging.info("Force Exiting Meeting.")
-        finally:
-            # Ensure the process is terminated
-            if process.poll() is None:  # Check if the process is still running
-                process.terminate()
-                try:
-                    process.wait(timeout=10)  # Wait for the process to terminate
-                except subprocess.TimeoutExpired:
-                    logging.warning("Process did not terminate in time, killing it.")
-                    process.kill()
-                    process.wait()
-                logging.info("Subprocess terminated after meeting time ended or host ended the meeting.")
+            # Check meeting time
+            if time.time() - start_time >= end_time * 60:
+                logging.info("Meeting time is over. Exiting...")
+                process.send_signal(signal.SIGINT)  # Send Ctrl+C
+                break
 
-        # Check if the process had any errors
-        stderr_output = process.stderr.read()
-        if stderr_output:
-            logging.error(f"Error output from process: {stderr_output}")
+        # Terminate the subprocess
+        if process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                logging.warning("Process did not terminate in time, killing it.")
+                process.kill()
+                process.wait()
+            logging.info("Subprocess terminated after meeting time ended or host ended the meeting.")
 
-    except FileNotFoundError as fnf_error:
-        logging.error(f"File not found error: {fnf_error}")
-    except subprocess.CalledProcessError as cpe_error:
-        logging.error(f"Runtime error: Failed to execute zoomsdk binary with error: {cpe_error}")
-        if cpe_error.returncode == -11:  # Check for segmentation fault
-            logging.error("Segmentation fault occurred while executing the zoomsdk binary.")
-    except PermissionError as perm_error:
-        logging.error(f"Permission error: {perm_error}")
+        # Now call process.communicate() to safely read any remaining stderr
+        _stdout_final, stderr_final = process.communicate(timeout=5)
+        if stderr_final:
+            logging.error(f"Error output from process: {stderr_final}")
+
     except Exception as e:
         logging.error(f"Unexpected error during meeting join: {e}")
     finally:
         logging.info("Exiting the meeting process")
+
     print('here')
     return ""
