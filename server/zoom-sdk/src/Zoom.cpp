@@ -1,10 +1,18 @@
 #include "Zoom.h"
+#include <thread>
+#include <chrono>
 
 SDKError Zoom::config(int ac, char** av) {
     auto status = m_config.read(ac, av);
     if (status) {
         Log::error("failed to read configuration");
         return SDKERR_INTERNAL_ERROR;
+    }
+
+    // Check if leave time is set
+    if (m_config.leaveTimeMinutes() <= 0) {
+        Log::error("Leave time must be specified and greater than zero");
+        return SDKERR_INVALID_PARAMETER;
     }
 
     return SDKERR_SUCCESS;
@@ -32,7 +40,6 @@ SDKError Zoom::init() {
     return createServices();
 }
 
-
 SDKError Zoom::createServices() {
     auto err = CreateMeetingService(&m_meetingService);
     if (hasError(err)) return err;
@@ -59,7 +66,6 @@ SDKError Zoom::auth() {
         Log::error("Client ID cannot be blank");
         return err;
     }
-
 
     if (secret.empty()) {
         Log::error("Client Secret cannot be blank");
@@ -97,7 +103,6 @@ SDKError Zoom::join() {
     auto mid = m_config.meetingId();
     auto password = m_config.password();
     auto displayName = m_config.displayName();
-
 
     if (mid.empty()) {
         Log::error("Meeting ID cannot be blank");
@@ -149,7 +154,18 @@ SDKError Zoom::join() {
         audioSettings->EnableAutoJoinAudio(true);
     }
 
-    return m_meetingService->Join(joinParam);
+    err = m_meetingService->Join(joinParam);
+    if (hasError(err, "join meeting")) {
+        return err;
+    }
+
+    // Automatically leave the meeting after the configured leave time
+    std::thread([this]() {
+        std::this_thread::sleep_for(std::chrono::minutes(m_config.leaveTimeMinutes()));
+        this->leave();
+    }).detach();
+
+    return SDKERR_SUCCESS;
 }
 
 SDKError Zoom::start() {
@@ -204,14 +220,7 @@ SDKError Zoom::clean() {
 SDKError Zoom::startRawRecording() {
     auto recCtl = m_meetingService->GetMeetingRecordingController();
 
-    SDKError err = recCtl->CanStartRawRecording();
-
-    if (hasError(err)) {
-        Log::info("requesting local recording privilege");
-        return recCtl->RequestLocalRecordingPrivilege();
-    }
-
-    err = recCtl->StartRawRecording();
+    SDKError err = recCtl->StartRawRecording();
     if (hasError(err, "start raw recording"))
         return err;
 
@@ -235,29 +244,6 @@ SDKError Zoom::startRawRecording() {
         err = m_videoHelper->subscribe(uid, RAW_DATA_TYPE_VIDEO);
         if (hasError(err, "subscribe to raw video"))
             return err;
-
-  /*      auto* videoSourceHelper = GetRawdataVideoSourceHelper();
-        if (!videoSourceHelper) {
-            Log::error("Initializing Video Source Helper");
-            return SDKERR_UNINITIALIZE;
-        }
-
-        err = videoSourceHelper->setExternalVideoSource(m_videoSource);
-        if (hasError(err, "set video source"))
-            return err;
-
-        auto* videoSettings = m_settingService->GetVideoSettings();
-        videoSettings->EnableAutoTurnOffVideoWhenJoinMeeting(false);
-
-       auto* sender = m_videoSource->getSender();
-        SDKError e;
-        do {
-            Log::info("attempting unmute");
-            auto* videoCtl = m_meetingService->GetMeetingVideoController();
-            e = videoCtl->UnmuteVideo();
-            if (hasError(e, "unmute")) sleep(1);
-        } while (hasError(e));*/
-
     }
 
     if (m_config.useRawAudio()) {
@@ -293,7 +279,6 @@ SDKError Zoom::stopRawRecording() {
 bool Zoom::isMeetingStart() {
     return m_config.isMeetingStart();
 }
-
 
 bool Zoom::hasError(const SDKError e, const string& action) {
     auto isError = e != SDKERR_SUCCESS;

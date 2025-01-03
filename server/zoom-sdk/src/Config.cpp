@@ -30,6 +30,7 @@ Config::Config() :
     m_rawRecordVideoCmd->add_option("-f, --file", m_videoFile, "Output YUV video file")->required();
     m_rawRecordVideoCmd->add_option("-d, --dir", m_videoDir, "Video Output Directory");
 
+    m_app.add_option("--leave-time", m_leaveTimeMinutes, "Time in minutes after which the bot should leave the meeting");
 }
 
 int Config::read(int ac, char **av) {
@@ -156,3 +157,6 @@ const string& Config::zoomHost() const {
     return m_zoomHost;
 }
 
+int Config::leaveTimeMinutes() const {
+    return m_leaveTimeMinutes;
+}

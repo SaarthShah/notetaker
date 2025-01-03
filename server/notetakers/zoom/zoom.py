@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import subprocess
 import pwd
 import signal
+import uuid
 
 # Load environment variables
 load_dotenv()
@@ -31,9 +32,17 @@ def join_zoom_meeting(meeting_url, end_time):
         zoomuser_uid = zoomuser_info.pw_uid
         zoomuser_gid = zoomuser_info.pw_gid
 
+        # Generate a random UUID for the raw audio file
+        audio_uuid = str(uuid.uuid4())
+        audio_file = f"meeting-audio-{audio_uuid}.pcm"
+        logging.info(f"Generated audio file name: {audio_file}")
+
         # Run the command as zoomuser without using sudo
         executable_path = "/app/zoom-sdk/build/zoomsdk"
-        command = f'{executable_path} --join-url "{meeting_url}" --client-id {client_id} --client-secret {client_secret}'
+        command = (
+            f'{executable_path} --join-url "{meeting_url}" --client-id {client_id} '
+            f'--client-secret {client_secret} RawAudio --file "{audio_file}"'
+        )
         logging.info(f"Running command: {command}")
 
         process = subprocess.Popen(
@@ -48,6 +57,7 @@ def join_zoom_meeting(meeting_url, end_time):
 
         logging.info('Process started, waiting for output...')
         start_time = time.time()
+        last_time_check = start_time
 
         # Read stdout line-by-line in a loop (if you still want real-time logs)
         while True:
@@ -62,8 +72,16 @@ def join_zoom_meeting(meeting_url, end_time):
                     process.send_signal(signal.SIGINT)  # Send Ctrl+C
                     break
 
+            # Print time left every 10 seconds
+            current_time = time.time()
+            if current_time - last_time_check >= 10:
+                time_left = end_time * 60 - (current_time - start_time)
+                if time_left > 0:
+                    logging.info(f"Time left: {int(time_left // 60)} minutes and {int(time_left % 60)} seconds")
+                last_time_check = current_time
+
             # Check meeting time
-            if time.time() - start_time >= end_time * 60:
+            if current_time - start_time >= end_time * 60:
                 logging.info("Meeting time is over. Exiting...")
                 process.send_signal(signal.SIGINT)  # Send Ctrl+C
                 break

@@ -48,6 +48,7 @@ class Config {
 
     bool m_isMeetingStart;
 
+    int m_leaveTimeMinutes = 0; // Default leave time is 0 (no auto-leave)
 
 public:
     Config();
@@ -85,7 +86,8 @@ public:
     const string& videoDir() const;
 
     bool separateParticipantAudio() const;
-};
 
+    int leaveTimeMinutes() const;
+};
 
 #endif //MEETING_SDK_LINUX_SAMPLE_CONFIG_H
