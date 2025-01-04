@@ -157,4 +157,4 @@ RUN echo 'Setting up PulseAudio...' && \
     echo 'Starting build...'
     
 # Command to run the application
-CMD ["bash", "-c", "cd /app/build && ./zoomsdk && exec uvicorn notetakers.app:app --host 0.0.0.0 --port 7099 --reload"]
+CMD ["bash", "-c", "ls -l /app && cd /app && uvicorn notetakers.app:app --host 0.0.0.0 --port 7099 --reload --reload-dir /app"]
