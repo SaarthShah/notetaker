@@ -38,7 +38,7 @@ def join_zoom_meeting(meeting_url, end_time):
         logging.info(f"Generated audio file name: {audio_file}")
 
         # Run the command as zoomuser without using sudo
-        executable_path = "/app/zoom-sdk/build/zoomsdk"
+        executable_path = "./app/build/zoomsdk"
         command = [
             executable_path,
             "--leave-time", str(end_time),

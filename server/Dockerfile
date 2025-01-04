@@ -50,7 +50,8 @@ RUN apt-get update && \
     gnupg \
     pulseaudio \
     pulseaudio-utils \
-    python3-pip && \
+    python3-pip \
+    npm && \
     wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list' && \
     apt-get update && \
@@ -110,15 +111,15 @@ WORKDIR /app
 # Copy the entire project directory into the Docker image
 COPY . /app
 
-# Ensure the zoomuser exists in the final stage
-RUN id -u zoomuser &>/dev/null || useradd -m zoomuser
-
 # Install Python dependencies
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Compile the API server as root to avoid permission issues
 USER root
 RUN cmake -B build -S /app/zoom-sdk -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake && cmake --build build
+
+# Ensure the build directory is copied to the final image
+RUN mkdir -p /app/build && find build -mindepth 1 -maxdepth 1 -not -name 'CMakeCache.txt' -not -name 'CMakeFiles' -not -name 'Makefile' -not -name 'cmake_install.cmake' -not -name 'vcpkg-manifest-install.log' -not -name 'vcpkg_installed' -exec cp -r {} /app/build/ \;
 
 # Expose the port that the app runs on
 EXPOSE 7099
@@ -150,15 +151,10 @@ RUN echo 'Setting up PulseAudio...' && \
     echo 'Creating zoomus.conf configuration file...' && \
     echo -e '[General]\nsystem.audio.type=default' > /root/.config/zoomus.conf && \
     echo 'Checking contents of lib/zoomsdk...' && ls -l /lib/zoomsdk && \
-    echo 'Starting build process...' && \
-    echo 'Configuring CMake...' && \
-    cmake -B build -S . --preset debug || exit && \
-    echo 'Installing npm packages for client...' && \
-    npm --prefix=client install && \
-    echo 'Creating symlink for shared library...' && \
-    ln -sf /lib/zoomsdk/libmeetingsdk.so /lib/zoomsdk/libmeetingsdk.so.1 && \
-    echo 'Building the source code...' && \
-    cmake --build build
-
+    echo 'Checking contents of app/...' && ls -l /app && \
+    echo 'Checking contents of app/build...' && ls -l /app/build && \
+    echo 'Checking contents of app/zoom-sdk...' && ls -l /app/zoom-sdk && \
+    echo 'Starting build...'
+    
 # Command to run the application
-CMD ["bash", "-c", "cd /app/build && exec ./zoomsdk && uvicorn notetakers.app:app --host 0.0.0.0 --port 7099 --reload"]
+CMD ["bash", "-c", "cd /app/build && ./zoomsdk && exec uvicorn notetakers.app:app --host 0.0.0.0 --port 7099 --reload"]
