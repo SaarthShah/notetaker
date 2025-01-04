@@ -117,6 +117,7 @@ public:
 
     static bool hasError(SDKError e, const string& action="");
 
+    int getLeaveTimeMinutes() const;  // Add this line
 };
 
 #endif //MEETING_SDK_LINUX_SAMPLE_ZOOM_H

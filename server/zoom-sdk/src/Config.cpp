@@ -15,6 +15,7 @@ Config::Config() :
 
     m_app.add_option("--host", m_zoomHost, "Host Domain for the Zoom Meeting")->capture_default_str();
     m_app.add_option("-u, --join-url", m_joinUrl, "Join or Start a Meeting URL");
+    m_app.add_option("--leave-time", m_leaveTimeMinutes, "Time in minutes after which the bot should leave the meeting")->capture_default_str();
     m_app.add_option("-t, --join-token", m_joinToken, "Join the meeting with App Privilege using a token");
 
     m_app.add_option("--client-id", m_clientId, "Zoom Meeting Client ID")->required();
@@ -29,8 +30,6 @@ Config::Config() :
 
     m_rawRecordVideoCmd->add_option("-f, --file", m_videoFile, "Output YUV video file")->required();
     m_rawRecordVideoCmd->add_option("-d, --dir", m_videoDir, "Video Output Directory");
-
-    m_app.add_option("--leave-time", m_leaveTimeMinutes, "Time in minutes after which the bot should leave the meeting");
 }
 
 int Config::read(int ac, char **av) {

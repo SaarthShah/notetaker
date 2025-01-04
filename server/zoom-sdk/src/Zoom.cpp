@@ -3,14 +3,21 @@
 #include <chrono>
 
 SDKError Zoom::config(int ac, char** av) {
-    auto status = m_config.read(ac, av);
-    if (status) {
-        Log::error("failed to read configuration");
-        return SDKERR_INTERNAL_ERROR;
+    // Log all flags being passed
+    Log::info("Flags being passed:");
+    for (int i = 0; i < ac; ++i) {
+        Log::info(std::string("Flag ") + std::to_string(i) + ": " + av[i]);
+    }
+
+    try {
+        m_config.read(ac, av);
+    } catch (const CLI::ParseError& e) {
+        Log::error("failed to read configuration: " + std::string(e.what()));
+        return SDKERR_INVALID_PARAMETER;
     }
 
     // Check if leave time is set
-    if (m_config.leaveTimeMinutes() <= 0) {
+    if (getLeaveTimeMinutes() <= 0) {
         Log::error("Leave time must be specified and greater than zero");
         return SDKERR_INVALID_PARAMETER;
     }
@@ -103,6 +110,7 @@ SDKError Zoom::join() {
     auto mid = m_config.meetingId();
     auto password = m_config.password();
     auto displayName = m_config.displayName();
+    auto leaveMeeting = m_config.leaveTimeMinutes();
 
     if (mid.empty()) {
         Log::error("Meeting ID cannot be blank");
@@ -117,6 +125,11 @@ SDKError Zoom::join() {
     if (displayName.empty()) {
         Log::error("Display Name cannot be blank");
         return err;
+    }
+
+    if (leaveMeeting <= 0) {
+        Log::error("Leave time must be specified and greater than zero");
+        return SDKERR_INVALID_PARAMETER;
     }
 
     auto meetingNumber = stoull(mid);
@@ -161,7 +174,7 @@ SDKError Zoom::join() {
 
     // Automatically leave the meeting after the configured leave time
     std::thread([this]() {
-        std::this_thread::sleep_for(std::chrono::minutes(m_config.leaveTimeMinutes()));
+        std::this_thread::sleep_for(std::chrono::minutes(getLeaveTimeMinutes()));
         this->leave();
     }).detach();
 
@@ -293,4 +306,9 @@ bool Zoom::hasError(const SDKError e, const string& action) {
         }
     }
     return isError;
+}
+
+int Zoom::getLeaveTimeMinutes() const {
+    Log::success("Leave time is set to " + std::to_string(m_config.leaveTimeMinutes()));
+    return m_config.leaveTimeMinutes();  // Add this method
 }

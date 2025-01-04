@@ -39,15 +39,19 @@ def join_zoom_meeting(meeting_url, end_time):
 
         # Run the command as zoomuser without using sudo
         executable_path = "/app/zoom-sdk/build/zoomsdk"
-        command = (
-            f'{executable_path} --join-url "{meeting_url}" --client-id {client_id} '
-            f'--client-secret {client_secret} RawAudio --file "{audio_file}"'
-        )
-        logging.info(f"Running command: {command}")
+        command = [
+            executable_path,
+            "--leave-time", str(end_time),
+            "--client-id", client_id,
+            "--client-secret", client_secret,
+            "--join-url", meeting_url,
+            "RawAudio",
+            "--file", audio_file
+        ]
+        logging.info(f"Running command: {' '.join(command)}")
 
         process = subprocess.Popen(
             command,
-            shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,  # Ensures the output is decoded into text instead of bytes

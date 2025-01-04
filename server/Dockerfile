@@ -78,8 +78,9 @@ RUN echo "/lib/zoomsdk" >> /etc/ld.so.conf.d/zoomsdk.conf && ldconfig
 # Create a user named zoomuser
 RUN id -u zoomuser &>/dev/null || useradd -m zoomuser
 
-# Change ownership of the /lib/zoomsdk directory to zoomuser
+# Change ownership of the /lib/zoomsdk directory to zoomuser and root
 RUN chown -R zoomuser:zoomuser /lib/zoomsdk && \
+    chown -R root:root /lib/zoomsdk && \
     find /lib/zoomsdk -type f -exec chmod +x {} \; || true
 
 FROM base AS deps
@@ -95,6 +96,10 @@ RUN git clone --depth 1 https://github.com/Microsoft/vcpkg.git && \
     ./vcpkg/bootstrap-vcpkg.sh -disableMetrics && \
     ln -s /opt/vcpkg/vcpkg /usr/local/bin/vcpkg && \
     vcpkg install vcpkg-cmake ada-url cli11 jwt-cpp
+
+# Give zoomuser and root access to /opt/vcpkg
+RUN chown -R zoomuser:zoomuser /opt/vcpkg && \
+    chown -R root:root /opt/vcpkg
 
 FROM deps AS build
 
@@ -118,6 +123,42 @@ RUN cmake -B build -S /app/zoom-sdk -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/bu
 # Expose the port that the app runs on
 EXPOSE 7099
 
-# Start pulseaudio as zoomuser, run entry.sh, and then start the application as zoomuser
-USER zoomuser
-CMD ["bash", "-c", "pulseaudio --start && /tini -- ./lib/bin/entry.sh && uvicorn notetakers.app:app --host 0.0.0.0 --port 7099 --reload"]
+# Start pulseaudio as root to ensure necessary permissions
+USER root
+RUN echo 'Setting up PulseAudio...' && \
+    echo 'Creating /var/run/dbus directory...' && \
+    mkdir -p /var/run/dbus && \
+    echo 'Generating dbus machine-id...' && \
+    dbus-uuidgen > /var/lib/dbus/machine-id && \
+    echo 'Starting dbus-daemon...' && \
+    dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address && \
+    echo 'Adding root to pulse-access and audio groups...' && \
+    usermod -aG pulse-access,audio root && \
+    echo 'Adding zoomuser to pulse-access and audio groups...' && \
+    usermod -aG pulse-access,audio zoomuser && \
+    echo 'Cleaning up PulseAudio state...' && \
+    rm -rf /var/run/pulse /var/lib/pulse /root/.config/pulse/ && \
+    mkdir -p /root/.config/pulse/ && cp -r /etc/pulse/* /root/.config/pulse/ && \
+    echo 'Starting PulseAudio daemon...' && \
+    pulseaudio -D --exit-idle-time=-1 --system --disallow-exit && \
+    echo 'Loading module-null-sink for virtual speaker output...' && \
+    pactl load-module module-null-sink sink_name=SpeakerOutput && \
+    echo 'Setting default sink to SpeakerOutput...' && \
+    pactl set-default-sink SpeakerOutput && \
+    echo 'Setting default source to SpeakerOutput.monitor...' && \
+    pactl set-default-source SpeakerOutput.monitor && \
+    echo 'Creating zoomus.conf configuration file...' && \
+    echo -e '[General]\nsystem.audio.type=default' > /root/.config/zoomus.conf && \
+    echo 'Checking contents of lib/zoomsdk...' && ls -l /lib/zoomsdk && \
+    echo 'Starting build process...' && \
+    echo 'Configuring CMake...' && \
+    cmake -B build -S . --preset debug || exit && \
+    echo 'Installing npm packages for client...' && \
+    npm --prefix=client install && \
+    echo 'Creating symlink for shared library...' && \
+    ln -sf /lib/zoomsdk/libmeetingsdk.so /lib/zoomsdk/libmeetingsdk.so.1 && \
+    echo 'Building the source code...' && \
+    cmake --build build
+
+# Command to run the application
+CMD ["bash", "-c", "cd /app/build && exec ./zoomsdk && uvicorn notetakers.app:app --host 0.0.0.0 --port 7099 --reload"]
