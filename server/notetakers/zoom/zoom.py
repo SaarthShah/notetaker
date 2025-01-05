@@ -54,7 +54,7 @@ def join_zoom_meeting(meeting_url, end_time):
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True,  # Ensures the output is decoded into text instead of bytes
+            text=False,  # Changed to False to handle binary data
             bufsize=1,  # Line buffering
             preexec_fn=lambda: os.setgid(zoomuser_gid) or os.setuid(zoomuser_uid)
         )
@@ -70,11 +70,16 @@ def join_zoom_meeting(meeting_url, end_time):
             if not line and process.poll() is not None:
                 break
             if line.strip():
-                logging.info(line.strip())
-                if "✅ meeting ended" in line:
-                    logging.info("Meeting ended by host. Exiting...")
-                    process.send_signal(signal.SIGINT)  # Send Ctrl+C
-                    break
+                try:
+                    decoded_line = line.decode('utf-8').strip()
+                    logging.info(decoded_line)
+                    if "✅ meeting ended" in decoded_line:
+                        logging.info("Meeting ended by host. Exiting...")
+                        process.send_signal(signal.SIGINT)  # Send Ctrl+C
+                        break
+                except UnicodeDecodeError:
+                    # Ignore decoding errors
+                    pass
 
             # Print time left every 10 seconds
             current_time = time.time()
@@ -104,12 +109,15 @@ def join_zoom_meeting(meeting_url, end_time):
         # Now call process.communicate() to safely read any remaining stderr
         _stdout_final, stderr_final = process.communicate(timeout=5)
         if stderr_final:
-            logging.error(f"Error output from process: {stderr_final}")
+            try:
+                logging.error(f"Error output from process: {stderr_final.decode('utf-8')}")
+            except UnicodeDecodeError:
+                # Ignore decoding errors
+                pass
 
     except Exception as e:
         logging.error(f"Unexpected error during meeting join: {e}")
     finally:
         logging.info("Exiting the meeting process")
 
-    print('here')
     return ""

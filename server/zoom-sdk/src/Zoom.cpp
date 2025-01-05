@@ -201,7 +201,12 @@ SDKError Zoom::leave() {
     if (status == MEETING_STATUS_IDLE)
         return SDKERR_WRONG_USAGE;
 
-    return  m_meetingService->Leave(LEAVE_MEETING);
+    auto err = m_meetingService->Leave(LEAVE_MEETING);
+    if (!hasError(err, "leave meeting")) {
+        Log::success("Meeting ended successfully");
+    }
+
+    return err;
 }
 
 SDKError Zoom::clean() {
