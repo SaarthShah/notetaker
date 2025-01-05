@@ -60,7 +60,8 @@ RUN apt-get update && \
 
 # Install ALSA
 RUN apt-get update && \
-    apt-get install -y libasound2 libasound2-plugins alsa-utils alsa-oss pulseaudio pulseaudio-utils
+    apt-get install -y libasound2 libasound2-plugins alsa-utils alsa-oss pulseaudio pulseaudio-utils && \
+    echo -e "pcm.!default {\n  type plug\n  slave.pcm \"hw:0,0\"\n}\nctl.!default {\n  type hw\n  card 0\n}" > /etc/asound.conf
 
 # Copy the library files from zoom-sdk
 COPY zoom-sdk/lib /lib
@@ -83,6 +84,9 @@ RUN id -u zoomuser &>/dev/null || useradd -m zoomuser
 RUN chown -R zoomuser:zoomuser /lib/zoomsdk && \
     chown -R root:root /lib/zoomsdk && \
     find /lib/zoomsdk -type f -exec chmod +x {} \; || true
+
+# Ensure the out directory exists and has the correct permissions
+RUN mkdir -p /app/out && chown -R zoomuser:zoomuser /app/out
 
 FROM base AS deps
 
@@ -111,6 +115,9 @@ WORKDIR /app
 # Copy the entire project directory into the Docker image
 COPY . /app
 
+# Ensure start.sh is executable
+RUN chmod +x /app/start.sh
+
 # Install Python dependencies
 RUN pip3 install --no-cache-dir -r requirements.txt
 
@@ -126,36 +133,5 @@ EXPOSE 7099
 
 # Start pulseaudio as root to ensure necessary permissions
 USER root
-RUN echo 'Setting up PulseAudio...' && \
-    mkdir -p /root/.config/pulse && \
-    chown -R root:root /root/.config/pulse && \
-    echo 'Creating /var/run/dbus directory...' && \
-    mkdir -p /var/run/dbus && \
-    echo 'Generating dbus machine-id...' && \
-    dbus-uuidgen > /var/lib/dbus/machine-id && \
-    echo 'Starting dbus-daemon...' && \
-    dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address && \
-    echo 'Adding root to pulse-access and audio groups...' && \
-    usermod -aG pulse-access,audio root && \
-    echo 'Adding zoomuser to pulse-access and audio groups...' && \
-    usermod -aG pulse-access,audio zoomuser && \
-    echo 'Cleaning up PulseAudio state...' && \
-    rm -rf /var/run/pulse /var/lib/pulse /root/.config/pulse/ && \
-    mkdir -p /root/.config/pulse/ && cp -r /etc/pulse/* /root/.config/pulse/ && \
-    echo 'Starting PulseAudio daemon...' && \
-    pulseaudio -D --exit-idle-time=-1 --system --disallow-exit && \
-    echo 'Loading module-null-sink for virtual speaker output...' && \
-    pactl load-module module-null-sink sink_name=SpeakerOutput && \
-    echo 'Setting default sink to SpeakerOutput...' && \
-    pactl set-default-sink SpeakerOutput && \
-    echo 'Setting default source to SpeakerOutput.monitor...' && \
-    pactl set-default-source SpeakerOutput.monitor && \
-    echo 'Creating zoomus.conf configuration file...' && \
-    echo -e '[General]\nsystem.audio.type=default' > /root/.config/zoomus.conf && \
-    echo 'Checking contents of lib/zoomsdk...' && ls -l /lib/zoomsdk && \
-    echo 'Checking contents of app/...' && ls -l /app && \
-    echo 'Checking contents of app/build...' && ls -l /app/build && \
-    echo 'Checking contents of app/zoom-sdk...' && ls -l /app/zoom-sdk && \
-    echo 'Starting build...'
-# Command to run the application
-CMD ["bash", "-c", "ls -l /app && cd /app && uvicorn notetakers.app:app --host 0.0.0.0 --port 7099 --reload --reload-dir /app"]
+
+CMD ["bash", "-c", "cd /app && ./start.sh"]

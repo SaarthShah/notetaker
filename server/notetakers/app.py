@@ -216,9 +216,9 @@ async def join_zoom(request: Request):
             raise HTTPException(status_code=400, detail="Missing end_time")
 
         # Call the join_zoom_meeting function from zoom.py
-        join_zoom_meeting(meeting_link, end_time)
+        transcript = join_zoom_meeting(meeting_link, end_time)
 
-        return JSONResponse({"status": "success"}, status_code=200)
+        return JSONResponse({"status": "success", "transcript": transcript}, status_code=200)
 
     except Exception as e:
         print(f"An error occurred: {e}")

@@ -6,12 +6,14 @@ import subprocess
 import pwd
 import signal
 import uuid
+import requests
 
 # Load environment variables
 load_dotenv()
 
 client_id = os.getenv('ZOOM_CLIENT_ID')
 client_secret = os.getenv('ZOOM_CLIENT_SECRET')
+deepgram_api_key = os.getenv('DEEPGRAM')
 
 # Logger
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -19,6 +21,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 def join_zoom_meeting(meeting_url, end_time):
     logging.debug("join_zoom_meeting function called")
+    transcript = ""
     try:
         # Check if the zoomsdk directory exists
         zoomsdk_path = '/lib/zoomsdk'
@@ -28,17 +31,22 @@ def join_zoom_meeting(meeting_url, end_time):
             raise FileNotFoundError(f"{zoomsdk_path} is not a directory")
 
         # Get the UID and GID for zoomuser
-        zoomuser_info = pwd.getpwnam('zoomuser')
+        zoomuser_info = pwd.getpwnam('root')
         zoomuser_uid = zoomuser_info.pw_uid
         zoomuser_gid = zoomuser_info.pw_gid
 
         # Generate a random UUID for the raw audio file
         audio_uuid = str(uuid.uuid4())
         audio_file = f"meeting-audio-{audio_uuid}.pcm"
+        audio_file_path = os.path.join("/app/out", audio_file)
         logging.info(f"Generated audio file name: {audio_file}")
 
         # Run the command as zoomuser without using sudo
         executable_path = "/app/build/zoomsdk"
+        output_dir = "/app/out"
+        if not os.path.exists(output_dir):
+            logging.info(f"Creating output directory: {output_dir}")
+            os.makedirs(output_dir, exist_ok=True)
         command = [
             executable_path,
             "--leave-time", str(end_time),
@@ -46,16 +54,21 @@ def join_zoom_meeting(meeting_url, end_time):
             "--client-secret", client_secret,
             "--join-url", meeting_url,
             "RawAudio",
-            "--file", audio_file
+            "--file", audio_file,
+            # "--dir", output_dir
         ]
         logging.info(f"Running command: {' '.join(command)}")
+
+        # Print the current directory from which the Zoom SDK is being called
+        current_directory = os.getcwd()
+        logging.info(f"Current directory: {current_directory}")
 
         process = subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=False,  # Changed to False to handle binary data
-            bufsize=1,  # Line buffering
+            text=False,
+            bufsize=0,
             preexec_fn=lambda: os.setgid(zoomuser_gid) or os.setuid(zoomuser_uid)
         )
 
@@ -99,7 +112,7 @@ def join_zoom_meeting(meeting_url, end_time):
         if process.poll() is None:
             process.terminate()
             try:
-                process.wait(timeout=10)
+                process.wait(timeout=30)
             except subprocess.TimeoutExpired:
                 logging.warning("Process did not terminate in time, killing it.")
                 process.kill()
@@ -107,7 +120,7 @@ def join_zoom_meeting(meeting_url, end_time):
             logging.info("Subprocess terminated after meeting time ended or host ended the meeting.")
 
         # Now call process.communicate() to safely read any remaining stderr
-        _stdout_final, stderr_final = process.communicate(timeout=5)
+        _stdout_final, stderr_final = process.communicate(timeout=20)
         if stderr_final:
             try:
                 logging.error(f"Error output from process: {stderr_final.decode('utf-8')}")
@@ -115,9 +128,29 @@ def join_zoom_meeting(meeting_url, end_time):
                 # Ignore decoding errors
                 pass
 
+        # Use Deepgram to generate the transcript
+        if os.path.exists(audio_file_path):
+            logging.info("Sending audio file to Deepgram for transcription")
+            with open(audio_file_path, 'rb') as audio:
+                url = "https://api.deepgram.com/v1/listen"
+                headers = {
+                    'Authorization': f'Token {deepgram_api_key}',
+                    'Content-Type': 'audio/wav'  # Ensure the correct audio type is specified
+                }
+                try:
+                    response = requests.post(url, headers=headers, data=audio)
+                    response.raise_for_status()  # Raise an error for bad responses
+                    transcript_data = response.json()
+                    transcript = transcript_data.get('results', {}).get('channels', [{}])[0].get('alternatives', [{}])[0].get('transcript', '')
+                    logging.info(f"Transcript: {transcript}")
+                except requests.exceptions.HTTPError as http_err:
+                    logging.error(f"HTTP error occurred: {http_err} - {response.text}")
+                except Exception as err:
+                    logging.error(f"An error occurred while getting transcript from Deepgram: {err}")
+
     except Exception as e:
         logging.error(f"Unexpected error during meeting join: {e}")
     finally:
         logging.info("Exiting the meeting process")
 
-    return ""
+    return transcript

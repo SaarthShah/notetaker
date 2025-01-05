@@ -49,15 +49,17 @@ void ZoomSDKAudioRawDataDelegate::onShareAudioRawDataReceived(AudioRawData* data
 void ZoomSDKAudioRawDataDelegate::writeToFile(const string &path, AudioRawData *data)
 {
     static std::ofstream file;
-	file.open(path, std::ios::out | std::ios::binary | std::ios::app);
+    file.open(path, std::ios::out | std::ios::binary | std::ios::app);
 
-	if (!file.is_open())
-        return Log::error("failed to open audio file path: " + path);
-	
+    if (!file.is_open()) {
+        Log::error("failed to open audio file path: " + path);
+        return;
+    }
+    
     file.write(data->GetBuffer(), data->GetBufferLen());
 
     file.close();
-	file.flush();
+    file.flush();
 
     stringstream ss;
     ss << "Writing " << data->GetBufferLen() << "b to " << path << " at " << data->GetSampleRate() << "Hz";

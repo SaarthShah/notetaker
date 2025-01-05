@@ -6,7 +6,7 @@ services:
     platform: linux/amd64
     ports:
       - "7099:7099"
-    entrypoint: ["bash", "-c", "ls -l /app && cd /app && uvicorn notetakers.app:app --host 0.0.0.0 --port 7099 --reload --reload-dir /app"]
+    entrypoint: ["bash", "-c", "cd /app && ./start.sh"]
     environment:
       - DEBIAN_FRONTEND=noninteractive
     volumes:
