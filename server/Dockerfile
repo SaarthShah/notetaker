@@ -127,6 +127,8 @@ EXPOSE 7099
 # Start pulseaudio as root to ensure necessary permissions
 USER root
 RUN echo 'Setting up PulseAudio...' && \
+    mkdir -p /root/.config/pulse && \
+    chown -R root:root /root/.config/pulse && \
     echo 'Creating /var/run/dbus directory...' && \
     mkdir -p /var/run/dbus && \
     echo 'Generating dbus machine-id...' && \
@@ -155,6 +157,5 @@ RUN echo 'Setting up PulseAudio...' && \
     echo 'Checking contents of app/build...' && ls -l /app/build && \
     echo 'Checking contents of app/zoom-sdk...' && ls -l /app/zoom-sdk && \
     echo 'Starting build...'
-    
 # Command to run the application
 CMD ["bash", "-c", "ls -l /app && cd /app && uvicorn notetakers.app:app --host 0.0.0.0 --port 7099 --reload --reload-dir /app"]

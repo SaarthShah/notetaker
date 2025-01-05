@@ -3,12 +3,6 @@
 #include <chrono>
 
 SDKError Zoom::config(int ac, char** av) {
-    // Log all flags being passed
-    Log::info("Flags being passed:");
-    for (int i = 0; i < ac; ++i) {
-        Log::info(std::string("Flag ") + std::to_string(i) + ": " + av[i]);
-    }
-
     try {
         m_config.read(ac, av);
     } catch (const CLI::ParseError& e) {
@@ -233,7 +227,14 @@ SDKError Zoom::clean() {
 SDKError Zoom::startRawRecording() {
     auto recCtl = m_meetingService->GetMeetingRecordingController();
 
-    SDKError err = recCtl->StartRawRecording();
+    SDKError err = recCtl->CanStartRawRecording();
+
+    if (hasError(err)) {
+        Log::info("requesting local recording privilege");
+        return recCtl->RequestLocalRecordingPrivilege();
+    }
+
+    err = recCtl->StartRawRecording();
     if (hasError(err, "start raw recording"))
         return err;
 
