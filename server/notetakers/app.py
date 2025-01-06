@@ -153,7 +153,8 @@ async def handle_notification(request: Request):
                 body={
                     "meet_link": get_meeting_link(event),
                     "end_time": int((parser.isoparse(event['end']['dateTime']) - parser.isoparse(event['start']['dateTime'])).total_seconds() / 60),
-                    "user_id": user_id
+                    "user_id": user_id,
+                    "event_data": event_data
                 }
             )
         # Delete any non-meet or canceled events from the Supabase database

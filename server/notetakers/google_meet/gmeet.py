@@ -193,7 +193,6 @@ async def join_meet(meet_link, end_time=30):
     driver.set_window_size(1920, 1080)
 
     # Retrieve email and password from environment variables
-    print('here')
     email = os.getenv("GMAIL_USER_EMAIL", "")
     password = os.getenv("GMAIL_USER_PASSWORD", "")
 
