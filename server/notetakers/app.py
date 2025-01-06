@@ -209,6 +209,7 @@ async def join_zoom(request: Request):
         data = await request.json()
         meeting_link = data.get("meeting_link")
         end_time = data.get("end_time")
+        event_data = data.get("event_data", {})
 
         if not meeting_link:
             raise HTTPException(status_code=400, detail="Missing meeting_link")
