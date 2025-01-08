@@ -1,7 +1,8 @@
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 import uvicorn
-from datetime import datetime
+from datetime import datetime, timedelta
+
 from .google_meet.gmeet import join_meet
 from .zoom.zoom import join_zoom_meeting
 from .agent.cleanup import clean_google_meet_transcript
@@ -167,7 +168,6 @@ async def handle_notification(request: Request):
             )
         # Delete any non-meet or canceled events from the Supabase database
         non_meet_event_ids = [event['id'] for event in events if event not in meet_events or event.get('status') == 'cancelled']
-        print('non_meet_event_ids')
         if non_meet_event_ids:
             supabase.table("calevents").delete().in_("event_id", non_meet_event_ids).execute()
         
@@ -237,12 +237,15 @@ async def join_zoom(request: Request):
             "meeting_link": meeting_link,
             "summary": json.dumps(summary),
             "transcript": json.dumps(transcript),
-            "start_time": event_data.get('start_time').isoformat(),
-            "end_time": (parser.isoparse(event_data.get('start_time')) + datetime.timedelta(minutes=int(end_time))).isoformat(),
+            "start_time": parser.isoparse(event_data.get('start_time')).isoformat(),
+            "end_time": (parser.isoparse(event_data.get('start_time')) + timedelta(minutes=int(end_time))).isoformat(),
             "attendees": event_data.get('attendees'),
             "type":"zoom"
         }
 
+        response = supabase.table("meetings").insert(data).execute()
+        print(response)
+    
         return JSONResponse({"status": "success", "transcript": transcript}, status_code=200)
 
     except Exception as e:
