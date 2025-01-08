@@ -16,8 +16,7 @@ client_secret = os.getenv('ZOOM_CLIENT_SECRET')
 deepgram_api_key = os.getenv('DEEPGRAM')
 
 # Logger
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.DEBUG)  # Set to DEBUG to capture more detailed logs
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')  # Set to DEBUG to capture more detailed logs
 
 def join_zoom_meeting(meeting_url, end_time):
     logging.debug("join_zoom_meeting function called")

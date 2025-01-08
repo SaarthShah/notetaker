@@ -42,6 +42,8 @@ async def sync_google_calendar(refresh_token: str, user_id: str):
         else:
             print(f"Fetched {len(events)} events")
 
+            print(events)
+
             # Step 3: Filter events with valid meeting links
             meet_events = filter_meeting_events(events)
             print(f"Found {len(meet_events)} events with valid meeting links")
@@ -67,13 +69,24 @@ async def sync_google_calendar(refresh_token: str, user_id: str):
                     "attendees": json.dumps([attendee['email'] for attendee in event.get('attendees', [])]),
                 }
                 supabase.table("calevents").upsert(event_data, on_conflict=["event_id"]).execute()
+
+                meeting_link = get_meeting_link(event)
+                base_url = os.getenv("SERVER_ENDPOINT")
+
+                if "zoom.us" in meeting_link:
+                    link = base_url + "/join-zoom"
+                elif "meet.google.com" in meeting_link or "teams.microsoft" not in meeting_link:
+                    link = base_url + "/join-meet"
+                else:
+                    link = base_url + "/join-teams"
+
                 await upsert_cron_job(
                     task_id=event['id'],
                     run_time=event['start']['dateTime'],
-                    link=os.getenv("SERVER_ENDPOINT")+"/join-meet",
+                    link=link,
                     headers={"Content-Type": "application/json"},
                     body={
-                    "meet_link": get_meeting_link(event),
+                    "meet_link": meeting_link,
                     "end_time": int((parser.isoparse(event['end']['dateTime']) - parser.isoparse(event['start']['dateTime'])).total_seconds() / 60),
                     "user_id": user_id,
                     "event_data": event_data

@@ -16,6 +16,7 @@ from .calendars.google import get_access_token_from_refresh_token, sync_google_c
 from .calendars.utils import filter_meeting_events, get_meeting_link
 from .calendars.cron import upsert_cron_job
 from dateutil import parser
+import logging
 
 load_dotenv()
 
@@ -122,13 +123,8 @@ async def handle_notification(request: Request):
         if new_sync_token:
             supabase.table("integrations").update({"google_sync_token": new_sync_token}).eq("user_id", user_id).execute()
         print("Sync completed successfully.")
-
-        print(events)
-
         # Filter events with valid meeting links
         meet_events = filter_meeting_events(events)
-
-        print(meet_events)
         
         # Insert or update meet events in the Supabase database
         for event in meet_events:
@@ -145,13 +141,26 @@ async def handle_notification(request: Request):
             res,error = supabase.table("calevents").upsert(event_data, on_conflict=["event_id"]).execute()
             print(res, error)
             print('upserting cron')
+            meeting_link = get_meeting_link(event)
+            base_url = os.getenv("SERVER_ENDPOINT")
+
+            if "zoom.us" in meeting_link:
+                link = base_url + "/join-zoom"
+            elif "meet.google.com" in meeting_link or "teams.microsoft" not in meeting_link:
+                link = base_url + "/join-meet"
+            else:
+                link = base_url + "/join-teams"
+
+            print(link)
+            print(meeting_link)
+
             await upsert_cron_job(
                 task_id=event['id'],
                 run_time=event['start']['dateTime'],
-                link=os.getenv("SERVER_ENDPOINT")+"/join-meet",
+                link=link,
                 headers={"Content-Type": "application/json"},
                 body={
-                    "meet_link": get_meeting_link(event),
+                    "meet_link": meeting_link,
                     "end_time": int((parser.isoparse(event['end']['dateTime']) - parser.isoparse(event['start']['dateTime'])).total_seconds() / 60),
                     "user_id": user_id,
                     "event_data": event_data
@@ -207,7 +216,8 @@ async def sync_calendar(request: Request):
 async def join_zoom(request: Request):
     try:
         data = await request.json()
-        meeting_link = data.get("meeting_link")
+        user_id = data.get('user_id')
+        meeting_link = data.get("meet_link")
         end_time = data.get("end_time")
         event_data = data.get("event_data", {})
 
@@ -219,6 +229,19 @@ async def join_zoom(request: Request):
 
         # Call the join_zoom_meeting function from zoom.py
         transcript = join_zoom_meeting(meeting_link, end_time)
+
+        summary = summarize_transcript(transcript)
+
+        data = {
+            "user_id": user_id,
+            "meeting_link": meeting_link,
+            "summary": json.dumps(summary),
+            "transcript": json.dumps(transcript),
+            "start_time": event_data.get('start_time').isoformat(),
+            "end_time": (parser.isoparse(event_data.get('start_time')) + datetime.timedelta(minutes=int(end_time))).isoformat(),
+            "attendees": event_data.get('attendees'),
+            "type":"zoom"
+        }
 
         return JSONResponse({"status": "success", "transcript": transcript}, status_code=200)
 

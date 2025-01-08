@@ -16,7 +16,7 @@ def summarize_transcript(transcript, prompt=""):
     model="gpt-4o-2024-08-06",
     messages=[
         {"role": "system", "content": "Extract a detailed summary and action items from the transcript, do not add things from your end, just observe the transcript to generate summary and next steps" + prompt},
-        {"role": "user", "content": transcript}
+        {"role": "user", "content": str(transcript)}
     ],
         response_format=SummaryEvent,
     )

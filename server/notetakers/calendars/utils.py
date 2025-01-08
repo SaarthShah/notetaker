@@ -24,7 +24,7 @@ def get_meeting_link(event):
         return event['hangoutLink']
     
     # Define a regex pattern to match valid meeting URLs, allowing optional query parameters
-    meeting_url_pattern = re.compile(r'(https?://(?:meet\.google\.com|zoom\.us|teams\.microsoft\.com)/[^\s?]+(?:\?[^\s]*)?)')
+    meeting_url_pattern = re.compile(r'(http|www).*(zoom.us|meet.google.com|teams.microsoft)[a-z\/0-9?=A-Z.-]*')
     
     # Check for a meeting link in the 'description'
     if 'description' in event:
