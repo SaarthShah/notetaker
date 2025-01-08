@@ -16,7 +16,6 @@ from .calendars.google import get_access_token_from_refresh_token, sync_google_c
 from .calendars.utils import filter_meeting_events, get_meeting_link
 from .calendars.cron import upsert_cron_job
 from dateutil import parser
-import logging
 
 load_dotenv()
 
@@ -168,6 +167,7 @@ async def handle_notification(request: Request):
             )
         # Delete any non-meet or canceled events from the Supabase database
         non_meet_event_ids = [event['id'] for event in events if event not in meet_events or event.get('status') == 'cancelled']
+        print('non_meet_event_ids')
         if non_meet_event_ids:
             supabase.table("calevents").delete().in_("event_id", non_meet_event_ids).execute()
         
