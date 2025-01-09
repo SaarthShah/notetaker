@@ -69,7 +69,12 @@ export default function CallDetailsPage() {
 
         setCallDetails(data as CallDetails);
       } catch (error) {
-        console.error('Error fetching call details:', error);
+        if (error instanceof Error) {
+          console.error('Error fetching call details:', error.message);
+          console.error('Stack trace:', error.stack);
+        } else {
+          console.error('Error fetching call details:', error);
+        }
       } finally {
         setLoading(false);
       }

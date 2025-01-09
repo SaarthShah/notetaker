@@ -11,6 +11,7 @@ import {
   Pagination,
   Button,
   Badge,
+  Spinner,
 } from "@nextui-org/react";
 import { ChevronRight, RefreshCw } from "lucide-react";
 import { SidebarTitleContext } from "@/components/sidebar-context";
@@ -53,7 +54,11 @@ export function Meetings() {
   const { activeTab } = sidebarContext;
 
   if (error) return <div>Error loading meetings</div>;
-  if (!meetings) return <div>Loading...</div>;
+  if (!meetings) return (
+    <div className="flex justify-center items-center h-full">
+      <Spinner size="lg" />
+    </div>
+  );
 
   // Sort meetings by start_time in descending order
   const sortedMeetings = [...meetings].sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
