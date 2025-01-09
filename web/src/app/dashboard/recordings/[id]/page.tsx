@@ -37,6 +37,15 @@ const getMeetingTypeWithIcon = (type: string) => {
   }
 };
 
+const generateColorForSpeaker = (speaker: string) => {
+  const colors = ['bg-red-200', 'bg-green-200', 'bg-blue-200', 'bg-yellow-200', 'bg-purple-200'];
+  let hash = 0;
+  for (let i = 0; i < speaker.length; i++) {
+    hash = speaker.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+};
+
 export default function CallDetailsPage() {
   const [callDetails, setCallDetails] = useState<CallDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -130,14 +139,14 @@ export default function CallDetailsPage() {
                 <ScrollArea className="h-[400px] w-full rounded-md border p-4">
                   {callDetails.transcript ? (
                     callDetails.type === 'zoom' ? (
-                      JSON.parse(callDetails.transcript).results?.channels[0]?.alternatives[0]?.paragraphs?.paragraphs.map((paragraph, index) => (
+                      JSON.parse(callDetails.transcript).results?.channels[0]?.alternatives[0]?.paragraphs?.paragraphs.map((paragraph: any, index: number) => (
                         <div key={index} className="mb-4">
-                          {paragraph.sentences.map((sentence, idx) => (
+                          {paragraph.sentences.map((sentence: any, idx: number) => (
                             <div key={idx} className="flex items-start mb-2">
                               <Avatar className="w-8 h-8 mr-2">
                                 <AvatarFallback>{`S${paragraph.speaker}`}</AvatarFallback>
                               </Avatar>
-                              <div className="bg-gray-200 rounded-lg p-3">
+                              <div className={`${generateColorForSpeaker(`Speaker ${paragraph.speaker}`)} rounded-lg p-3`}>
                                 <p>{sentence.text}</p>
                                 <p className="text-xs mt-1 opacity-70">
                                   {`${new Date(new Date(callDetails.start_time).getTime() + sentence.start * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}`}
@@ -148,13 +157,13 @@ export default function CallDetailsPage() {
                         </div>
                       ))
                     ) : (
-                      JSON.parse(callDetails.transcript).map((entry, index) => (
+                      JSON.parse(callDetails.transcript).map((entry: any, index: number) => (
                         <div key={index} className={`flex mb-4 ${entry.user === 'You' ? 'justify-end' : 'justify-start'}`}>
                           <div className={`flex ${entry.user === 'You' ? 'flex-row-reverse' : 'flex-row'} items-start max-w-[70%]`}>
                             <Avatar className="w-8 h-8 mr-2">
                               <AvatarFallback>{entry.user[0]}</AvatarFallback>
                             </Avatar>
-                            <div className={`rounded-lg p-3 ${entry.user === 'You' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}>
+                            <div className={`rounded-lg p-3 ${entry.user === 'You' ? 'bg-blue-500 text-white' : generateColorForSpeaker(entry.user)}`}>
                               <p className="text-sm font-semibold mb-1">{entry.user}</p>
                               <p>{entry.content}</p>
                               <p className="text-xs mt-1 opacity-70">{entry.time}</p>
@@ -185,7 +194,7 @@ export default function CallDetailsPage() {
               </CardHeader>
               <CardContent>
                 <ul className="list-disc pl-5">
-                  {JSON.parse(callDetails.summary).action_items.map((item, index) => (
+                  {JSON.parse(callDetails.summary).action_items.map((item: any, index: number) => (
                     <li key={index} className="mb-2">{item}</li>
                   ))}
                 </ul>
