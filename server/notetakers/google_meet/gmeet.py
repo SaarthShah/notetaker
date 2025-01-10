@@ -2,19 +2,13 @@ import asyncio
 import os
 import subprocess
 from dotenv import load_dotenv
-import undetected_chromedriver as uc
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+from playwright.async_api import async_playwright
+from playwright_stealth import stealth_async
 import time
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from supabase import create_client, Client
 from io import BytesIO
 from PIL import Image
-from selenium_stealth import stealth
+from pyvirtualdisplay import Display
 
 # Load environment variables
 load_dotenv(os.path.join(os.path.dirname(__file__), '../.env'))
@@ -34,8 +28,8 @@ def upload_image_to_supabase(image, filename):
     return response
 
 # Function to capture and upload a screenshot
-def capture_and_upload_screenshot(driver, step_name):
-    screenshot = driver.get_screenshot_as_png()
+async def capture_and_upload_screenshot(page, step_name):
+    screenshot = await page.screenshot(type='png')
     image = Image.open(BytesIO(screenshot))
     upload_image_to_supabase(image, f"{step_name}_{int(time.time())}.png")
 
@@ -48,104 +42,18 @@ async def run_command_async(command):
     return stdout, stderr
 
 # Asynchronous function to handle Google sign-in
-async def google_sign_in(email, password, driver):
-    driver.get("https://accounts.google.com")
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "identifier")))
-    email_field = driver.find_element(By.NAME, "identifier")
-    email_field.send_keys(email)
-    capture_and_upload_screenshot(driver, "email_entered")
-    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Next')]"))).click()
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "Passwd")))
-    password_field = driver.find_element(By.NAME, "Passwd")
-    password_field.click()
-    password_field.send_keys(password)
-    capture_and_upload_screenshot(driver, "password_entered")
-    password_field.send_keys(Keys.RETURN)
-    WebDriverWait(driver, 10).until(EC.url_contains("myaccount.google.com"))
-    capture_and_upload_screenshot(driver, "login_successful")
-
-def create_chrome_driver():
-    options = Options()
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--remote-debugging-port=9222")
-    options.add_argument("--headless")  # Headless mode
-    options.add_argument("--window-size=1920x1080")  # Set window size   
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--disable-infobars")
-    options.add_argument("--disable-extensions")
-    options.add_argument("--use-fake-ui-for-media-stream")
-    options.add_argument("--use-file-for-fake-video-capture=@black.y4m")
-    options.add_argument("user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
-
-    # Ensure the correct path to the ChromeDriver
-    service = Service('/usr/bin/chromedriver')
-    
-    # Create the Chrome driver
-    driver = uc.Chrome(service=service, options=options)
-    
-    # Apply Selenium Stealth
-    stealth(driver,
-            languages=["en-US", "en"],
-            vendor="Google Inc.",
-            platform="Win32",
-            webgl_vendor="Intel Inc.",
-            renderer="Intel Iris OpenGL Engine",
-            fix_hairline=True,
-            )
-    
-    # Inject JavaScript to bypass headless detection
-    def inject_js(driver):
-        js_code = """
-        Object.defineProperty(navigator, 'languages', {
-            get: function() {
-                return ['en-US', 'en'];
-            },
-        });
-        Object.defineProperty(navigator, 'plugins', {
-            get: function() {
-                return [1, 2, 3, 4, 5];
-            },
-        });
-        const getParameter = WebGLRenderingContext.getParameter;
-        WebGLRenderingContext.prototype.getParameter = function(parameter) {
-            if (parameter === 37445) {
-                return 'Intel Open Source Technology Center';
-            }
-            if (parameter === 37446) {
-                return 'Mesa DRI Intel(R) Ivybridge Mobile ';
-            }
-            return getParameter(parameter);
-        };
-        ['height', 'width'].forEach(property => {
-            const imageDescriptor = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, property);
-            Object.defineProperty(HTMLImageElement.prototype, property, {
-                ...imageDescriptor,
-                get: function() {
-                    if (this.complete && this.naturalHeight == 0) {
-                        return 20;
-                    }
-                    return imageDescriptor.get.apply(this);
-                },
-            });
-        });
-        const elementDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight');
-        Object.defineProperty(HTMLDivElement.prototype, 'offsetHeight', {
-            ...elementDescriptor,
-            get: function() {
-                if (this.id === 'modernizr') {
-                    return 1;
-                }
-                return elementDescriptor.get.apply(this);
-            },
-        });
-        """
-        driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": js_code})
-
-    inject_js(driver)
-    
-    return driver
+async def google_sign_in(email, password, page):
+    await page.goto("https://accounts.google.com")
+    await page.wait_for_selector('input[type="email"]')
+    await page.fill('input[type="email"]', email)
+    await capture_and_upload_screenshot(page, "email_entered")
+    await page.click('button:has-text("Next")')
+    await page.wait_for_selector('input[type="password"]')
+    await page.fill('input[type="password"]', password)
+    await capture_and_upload_screenshot(page, "password_entered")
+    await page.keyboard.press('Enter')
+    await page.wait_for_navigation()
+    await capture_and_upload_screenshot(page, "login_successful")
 
 # Main function to join a Google Meet
 async def join_meet(meet_link, end_time=30):
@@ -188,152 +96,151 @@ async def join_meet(meet_link, end_time=30):
 
     print('here subprocess end')
 
-    # Initialize Chrome driver
-    driver = create_chrome_driver()
-    driver.set_window_size(1920, 1080)
+    # Start virtual display
+    display = Display(visible=0, size=(1920, 1080))
+    display.start()
 
-    # Retrieve email and password from environment variables
-    email = os.getenv("GMAIL_USER_EMAIL", "")
-    password = os.getenv("GMAIL_USER_PASSWORD", "")
+    # Launch browser with Playwright
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True, args=[
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--window-size=1920,1080',
+            '--use-fake-ui-for-media-stream',
+            '--use-file-for-fake-video-capture=@black.y4m'
+        ])
+        context = await browser.new_context(user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
+        page = await context.new_page()
 
-    if not email or not password:
-        print("No email or password specified")
-        return
+        # Apply stealth plugin
+        await stealth_async(page)
 
-    # Sign in to Google
-    print("Google Sign in")
-    await google_sign_in(email, password, driver)
+        # Retrieve email and password from environment variables
+        email = os.getenv("GMAIL_USER_EMAIL", "")
+        password = os.getenv("GMAIL_USER_PASSWORD", "")
 
-    # Access the Google Meet link
-    driver.get(meet_link)
+        if not email or not password:
+            print("No email or password specified")
+            return
 
-    # Grant necessary permissions
-    driver.execute_cdp_cmd(
-        "Browser.grantPermissions",
-        {
-            "origin": meet_link,
-            "permissions": [
-                "geolocation",
-                "audioCapture",
-                "displayCapture",
-                "videoCapture",
-                "videoCapturePanTiltZoom",
-            ],
-        },
-    )
+        # Sign in to Google
+        # print("Google Sign in")
+        # await google_sign_in(email, password, page)
 
-    for i in range(5):
-        capture_and_upload_screenshot(driver, f"screenshot_{i+1}")
-        time.sleep(1)
-    try:
-        WebDriverWait(driver, 120).until(EC.element_to_be_clickable(
-            (By.XPATH, "/html/body/div/div[3]/div[2]/div/div/div/div/div[2]/div/div[1]/button")
-        )).click()
-    except NoSuchElementException:
-        print("No popup")
-    capture_and_upload_screenshot(driver, "after_popup_handling")
+        # Access the Google Meet link
+        await page.goto(meet_link)
 
-    print("Disable microphone")
-    try:
-        # Find the button to turn off the microphone using XPath
-        button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
-            (By.XPATH, "//div[@aria-label='Turn off microphone']")
-        ))
-        print("Disabling microphone using Selenium")
-        button.click()
-    except NoSuchElementException:
-        print("Microphone button not found using Selenium")
-    capture_and_upload_screenshot(driver, "after_microphone_disable")
+        # Grant necessary permissions
+        await page.evaluate('''() => {
+            navigator.permissions.query = (parameters) => {
+                return Promise.resolve({ state: 'granted' });
+            };
+        }''')
 
-    print("Disable camera")
-    try:
-        # Find the button to turn off the camera using XPath
-        button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
-            (By.XPATH, "//div[@aria-label='Turn off camera']")
-        ))
-        print("Disabling camera using Selenium")
-        button.click()
-    except NoSuchElementException:
-        print("Camera button not found using Selenium")
-    capture_and_upload_screenshot(driver, "after_camera_disable")
-
-    # Handle authentication and meeting options
-    try:
-        input_element = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
-            (By.XPATH, './/input[@aria-label="Your name"]')
-        ))
-        input_element.send_keys("Catchflow AI")
-    except NoSuchElementException:
-        print("Name input field not found")
-    capture_and_upload_screenshot(driver, "after_name_input")
-
-    try:
-        join_now_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
-            (By.XPATH, "//span[contains(text(), 'Join now')]/ancestor::button")
-        ))
-        print(join_now_button)
-        join_now_button.click()
-    except NoSuchElementException:
-        print("Join Now button not found")
-    capture_and_upload_screenshot(driver, "after_join_now_click")
-
-    # Start capturing the transcript
-    print("Start capturing transcript")
-    transcript = []
-    last_transcript = ""
-
-    start_time = time.time()
-
-    while True and (time.time() - start_time) < (end_time * 60):
+        for i in range(5):
+            await capture_and_upload_screenshot(page, f"screenshot_{i+1}")
+            await asyncio.sleep(1)
         try:
-            caption_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable(
-                (By.XPATH, '//*[@id="yDmH0d"]/c-wiz/div/div/div[34]/div[4]/div[10]/div/div/div[2]/div/div[3]/span/button')
-            ))
-            # Check if the button is not enabled by checking the aria-pressed attribute
-            print(caption_button)
-            if caption_button.get_attribute("aria-pressed") == "false":
-                caption_button.click()
-            break  # Exit the loop if the button is found and clicked
-        except NoSuchElementException:
+            await page.wait_for_selector("button:has-text('Join now')", timeout=120000)
+            button = await page.query_selector("button:has-text('Join now')")
+            await button.click()
+        except Exception:
+            print("No popup")
+        await capture_and_upload_screenshot(page, "after_popup_handling")
+
+        print("Disable microphone")
+        try:
+            button = await page.wait_for_selector("//div[@aria-label='Turn off microphone']", timeout=10000)
+            print("Disabling microphone using Playwright")
+            await button.click()
+        except Exception:
+            print("Microphone button not found using Playwright")
+        await capture_and_upload_screenshot(page, "after_microphone_disable")
+
+        print("Disable camera")
+        try:
+            button = await page.wait_for_selector("//div[@aria-label='Turn off camera']", timeout=10000)
+            print("Disabling camera using Playwright")
+            await button.click()
+        except Exception:
+            print("Camera button not found using Playwright")
+        await capture_and_upload_screenshot(page, "after_camera_disable")
+
+        # Handle authentication and meeting options
+        try:
+            input_element = await page.wait_for_selector('.//input[@aria-label="Your name"]', timeout=10000)
+            await input_element.fill("Catchflow AI")
+        except Exception:
+            print("Name input field not found")
+        await capture_and_upload_screenshot(page, "after_name_input")
+
+        try:
+            join_now_button = await page.wait_for_selector("//span[contains(text(), 'Join now')]/ancestor::button", timeout=10000)
+            print(join_now_button)
+            await join_now_button.click()
+        except Exception:
+            print("Join Now button not found")
+        await capture_and_upload_screenshot(page, "after_join_now_click")
+
+        # Start capturing the transcript
+        print("Start capturing transcript")
+        transcript = []
+        last_transcript = ""
+
+        start_time = time.time()
+
+        while True and (time.time() - start_time) < (end_time * 60):
             try:
-                waiting_text = driver.find_element(By.XPATH, '//*[contains(text(), "Asking to be let in")]')
-                if waiting_text:
-                    print("Waiting to be let in")
-            except NoSuchElementException:
-                print("Captions button not found. Retrying...")
-            time.sleep(1)  # Wait for a short period before retrying
-    capture_and_upload_screenshot(driver, "after_captions_button")
-
-    try:
-        while (time.time() - start_time) < (end_time * 60):
-            time.sleep(2)
-            transcript_elements = driver.find_elements(By.CSS_SELECTOR, ".a4cQT .nMcdL")
-            for element in transcript_elements:
+                caption_button = await page.wait_for_selector('//*[@id="yDmH0d"]/c-wiz/div/div/div[34]/div[4]/div[10]/div/div/div[2]/div/div[3]/span/button', timeout=10000)
+                # Check if the button is not enabled by checking the aria-pressed attribute
+                print(caption_button)
+                aria_pressed = await page.evaluate('(button) => button.getAttribute("aria-pressed")', caption_button)
+                if aria_pressed == "false":
+                    await caption_button.click()
+                break  # Exit the loop if the button is found and clicked
+            except Exception:
                 try:
-                    person_name = element.find_element(By.CLASS_NAME, "KcIKyf").text
-                    transcript_text = element.find_element(By.CLASS_NAME, "bh44bd").text
-                    if transcript_text != last_transcript:
-                        last_transcript = transcript_text
-                        timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-                        transcript.append({
-                            "personName": person_name,
-                            "timeStamp": timestamp,
-                            "transcriptText": transcript_text
-                        })
-                        print(f"New transcript: {transcript_text}")
-                except StaleElementReferenceException:
-                    print("Stale element reference exception caught, skipping this element.")
-    except Exception as e:
-        print(f"An error occurred while capturing the transcript: {e}")
+                    waiting_text = await page.query_selector('//*[contains(text(), "Asking to be let in")]')
+                    if waiting_text:
+                        print("Waiting to be let in")
+                except Exception:
+                    print("Captions button not found. Retrying...")
+                await asyncio.sleep(1)  # Wait for a short period before retrying
+        await capture_and_upload_screenshot(page, "after_captions_button")
 
-    print("Done capturing transcript")
+        try:
+            while (time.time() - start_time) < (end_time * 60):
+                await asyncio.sleep(2)
+                transcript_elements = await page.query_selector_all(".a4cQT .nMcdL")
+                for element in transcript_elements:
+                    try:
+                        person_name = await page.evaluate('(element) => element.querySelector(".KcIKyf").innerText', element)
+                        transcript_text = await page.evaluate('(element) => element.querySelector(".bh44bd").innerText', element)
+                        if transcript_text != last_transcript:
+                            last_transcript = transcript_text
+                            timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                            transcript.append({
+                                "personName": person_name,
+                                "timeStamp": timestamp,
+                                "transcriptText": transcript_text
+                            })
+                            print(f"New transcript: {transcript_text}")
+                    except Exception as e:
+                        print(f"An error occurred while processing transcript element: {e}")
+        except Exception as e:
+            print(f"An error occurred while capturing the transcript: {e}")
 
-    # Return the transcript instead of saving to a file
-    print("Returning the captured transcript")
+        print("Done capturing transcript")
 
-    # Close the Google Meet window after capturing
-    driver.quit()
-    print("Closed the Google Meet window")
-    print("- End of work")
+        # Return the transcript instead of saving to a file
+        print("Returning the captured transcript")
 
-    return transcript
+        # Close the Google Meet window after capturing
+        await browser.close()
+        display.stop()
+        print("Closed the Google Meet window")
+        print("- End of work")
+
+        return transcript

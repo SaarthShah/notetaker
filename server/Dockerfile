@@ -51,7 +51,8 @@ RUN apt-get update && \
     pulseaudio \
     pulseaudio-utils \
     python3-pip \
-    npm && \
+    npm \
+    xvfb && \
     wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list' && \
     apt-get update && \
@@ -120,6 +121,8 @@ RUN chmod +x /app/start.sh
 
 # Install Python dependencies
 RUN pip3 install --no-cache-dir -r requirements.txt
+
+RUN playwright install
 
 # Compile the API server as root to avoid permission issues
 USER root

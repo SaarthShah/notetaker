@@ -8,6 +8,10 @@ pytz
 undetected-chromedriver
 selenium
 supabase
-openai
+openai==1.35.8
 Pillow
 selenium-stealth
+playwright
+playwright-stealth
+pyvirtualdisplay
+websockets

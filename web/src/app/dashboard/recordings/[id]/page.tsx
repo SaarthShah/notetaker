@@ -139,7 +139,7 @@ export default function CallDetailsPage() {
                 <ScrollArea className="h-[400px] w-full rounded-md border p-4">
                   {callDetails.transcript ? (
                     callDetails.type === 'zoom' ? (
-                      JSON.parse(callDetails.transcript).results?.channels[0]?.alternatives[0]?.paragraphs?.paragraphs.map((paragraph: any, index: number) => (
+                      JSON.parse(callDetails.transcript).results?.channels[0]?.alternatives[0]?.paragraphs?.map((paragraph: any, index: number) => (
                         <div key={index} className="mb-4">
                           {paragraph.sentences.map((sentence: any, idx: number) => (
                             <div key={idx} className="flex items-start mb-2">
