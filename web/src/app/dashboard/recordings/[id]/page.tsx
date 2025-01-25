@@ -139,23 +139,27 @@ export default function CallDetailsPage() {
                 <ScrollArea className="h-[400px] w-full rounded-md border p-4">
                   {callDetails.transcript ? (
                     callDetails.type === 'zoom' ? (
-                      JSON.parse(callDetails.transcript).results?.channels[0]?.alternatives[0]?.paragraphs?.map((paragraph: any, index: number) => (
-                        <div key={index} className="mb-4">
-                          {paragraph.sentences.map((sentence: any, idx: number) => (
-                            <div key={idx} className="flex items-start mb-2">
-                              <Avatar className="w-8 h-8 mr-2">
-                                <AvatarFallback>{`S${paragraph.speaker}`}</AvatarFallback>
-                              </Avatar>
-                              <div className={`${generateColorForSpeaker(`Speaker ${paragraph.speaker}`)} rounded-lg p-3`}>
-                                <p>{sentence.text}</p>
-                                <p className="text-xs mt-1 opacity-70">
-                                  {`${new Date(new Date(callDetails.start_time).getTime() + sentence.start * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}`}
-                                </p>
+                      JSON.parse(callDetails.transcript).results?.channels[0]?.alternatives[0]?.paragraphs?.length > 0 ? (
+                        JSON.parse(callDetails.transcript).results.channels[0].alternatives[0].paragraphs.map((paragraph: any, index: number) => (
+                          <div key={index} className="mb-4">
+                            {paragraph.sentences.map((sentence: any, idx: number) => (
+                              <div key={idx} className="flex items-start mb-2">
+                                <Avatar className="w-8 h-8 mr-2">
+                                  <AvatarFallback>{`S${paragraph.speaker}`}</AvatarFallback>
+                                </Avatar>
+                                <div className={`${generateColorForSpeaker(`Speaker ${paragraph.speaker}`)} rounded-lg p-3`}>
+                                  <p>{sentence.text}</p>
+                                  <p className="text-xs mt-1 opacity-70">
+                                    {`${new Date(new Date(callDetails.start_time).getTime() + sentence.start * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}`}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
-                      ))
+                            ))}
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-center text-gray-500">No transcript available.</p>
+                      )
                     ) : (
                       JSON.parse(callDetails.transcript).map((entry: any, index: number) => (
                         <div key={index} className={`flex mb-4 ${entry.user === 'You' ? 'justify-end' : 'justify-start'}`}>

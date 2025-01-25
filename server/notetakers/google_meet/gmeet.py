@@ -1,22 +1,34 @@
 import asyncio
 import os
+import random
 import subprocess
-from dotenv import load_dotenv
-from playwright.async_api import async_playwright
-from playwright_stealth import stealth_async
-import time
-from supabase import create_client, Client
 from io import BytesIO
 from PIL import Image
+from dotenv import load_dotenv
+from playwright.async_api import async_playwright
 from pyvirtualdisplay import Display
+from fastapi import HTTPException
+from supabase import create_client, Client
+import time
 
 # Load environment variables
-load_dotenv(os.path.join(os.path.dirname(__file__), '../.env'))
+load_dotenv()
 
 # Initialize Supabase client
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# Function to set up virtual audio devices
+def setup_virtual_audio_devices():
+    try:
+        print("Setting up virtual audio devices...")
+        subprocess.check_output('pactl load-module module-null-sink sink_name=DummyOutput', shell=True)
+        subprocess.check_output('pactl load-module module-null-sink sink_name=MicOutput', shell=True)
+        subprocess.check_output('pactl set-default-source MicOutput.monitor', shell=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error setting up virtual audio: {e}")
+        raise HTTPException(status_code=500, detail="Failed to set up virtual audio devices.")
 
 # Function to upload image to Supabase
 def upload_image_to_supabase(image, filename):
@@ -33,156 +45,133 @@ async def capture_and_upload_screenshot(page, step_name):
     image = Image.open(BytesIO(screenshot))
     upload_image_to_supabase(image, f"{step_name}_{int(time.time())}.png")
 
-# Asynchronous function to run shell commands
-async def run_command_async(command):
-    process = await asyncio.create_subprocess_shell(
-        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
-    stdout, stderr = await process.communicate()
-    return stdout, stderr
-
-# Asynchronous function to handle Google sign-in
+# Google sign-in function
 async def google_sign_in(email, password, page):
     await page.goto("https://accounts.google.com")
-    await page.wait_for_selector('input[type="email"]')
     await page.fill('input[type="email"]', email)
     await capture_and_upload_screenshot(page, "email_entered")
-    await page.click('button:has-text("Next")')
+    await page.keyboard.press("Enter")
     await page.wait_for_selector('input[type="password"]')
     await page.fill('input[type="password"]', password)
     await capture_and_upload_screenshot(page, "password_entered")
-    await page.keyboard.press('Enter')
-    await page.wait_for_navigation()
+    await page.keyboard.press("Enter")
+    await page.wait_for_load_state('networkidle')
     await capture_and_upload_screenshot(page, "login_successful")
 
 # Main function to join a Google Meet
 async def join_meet(meet_link, end_time=30):
-    print(f"start recorder for {meet_link}")
+    print(f"Starting recorder for {meet_link}")
+    setup_virtual_audio_devices()
 
-    # Setup virtual audio drivers
-    print("starting virtual audio drivers")
-    try:
-        if os.uname().sysname == "Darwin":
-            print("Ensure BlackHole is installed and configured as the default audio device.")
-        else:
-            # Check if PulseAudio is running
-            pulse_check = subprocess.run(["pulseaudio", "--check"], capture_output=True)
-            if pulse_check.returncode != 0:
-                print("PulseAudio is not running. Attempting to start it.")
-                subprocess.run(["pulseaudio", "--start"], check=True)
-
-            subprocess.check_output(
-                'pactl load-module module-null-sink sink_name=DummyOutput sink_properties=device.description="Virtual_Dummy_Output"',
-                shell=True,
-            )
-            subprocess.check_output(
-                'pactl load-module module-null-sink sink_name=MicOutput sink_properties=device.description="Virtual_Microphone_Output"',
-                shell=True,
-            )
-            subprocess.check_output(
-                "pactl set-default-source MicOutput.monitor", shell=True
-            )
-            subprocess.check_output("pactl set-default-sink MicOutput", shell=True)
-            subprocess.check_output(
-                "pactl load-module module-virtual-source source_name=VirtualMic",
-                shell=True,
-            )
-    except subprocess.CalledProcessError as e:
-        print(f"An error occurred while setting up virtual audio drivers: {e}")
-        return
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-        return
-
-    print('here subprocess end')
-
-    # Start virtual display
+    # Virtual display for headless environment
     display = Display(visible=0, size=(1920, 1080))
     display.start()
 
-    # Launch browser with Playwright
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True, args=[
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-gpu',
-            '--window-size=1920,1080',
-            '--use-fake-ui-for-media-stream',
-            '--use-file-for-fake-video-capture=@black.y4m'
+        browser = await p.chromium.launch(headless=False, args=[
+            "--disable-blink-features=AutomationControlled",
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-extensions",
+            "--enable-webgl",
+            "--use-gl=egl",
+            "--disable-features=IsolateOrigins,site-per-process",
+            "--disable-blink-features",
+            "--use-fake-ui-for-media-stream",
+            "--use-fake-device-for-media-stream",
+            "--disable-features=WebRTC-HW-Decoding,WebRTC-HW-Encoding,WebRTC-Smoothness",
+            "--disable-features=WebRTC-ICE-Connection-Checking",
         ])
-        context = await browser.new_context(user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
+        context = await browser.new_context(
+            user_agent=random.choice([
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
+            ]),
+            viewport={"width": 1280, "height": 720},
+            locale="en-US",
+            timezone_id="America/Los_Angeles",
+            geolocation={"latitude": 37.7749, "longitude": -122.4194},
+            permissions=["geolocation", "notifications"],
+            color_scheme="dark"
+        )
         page = await context.new_page()
 
-        # Apply stealth plugin
-        await stealth_async(page)
-
-        # Retrieve email and password from environment variables
+        # Add stealth and spoofing
+        await page.add_init_script("""
+            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+            Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3] });
+            Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+            window.chrome = { runtime: {} };
+            // Additional stealth measures
+            Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 4 });
+            Object.defineProperty(navigator, 'deviceMemory', { get: () => 8 });
+        """)
+        # Sign in to Google
         email = os.getenv("GMAIL_USER_EMAIL", "")
         password = os.getenv("GMAIL_USER_PASSWORD", "")
-
         if not email or not password:
             print("No email or password specified")
-            return
-
-        # Sign in to Google
-        # print("Google Sign in")
+            raise HTTPException(status_code=500, detail="Email or password not specified")
+        
         # await google_sign_in(email, password, page)
 
-        # Access the Google Meet link
-        await page.goto(meet_link)
+        # Retry logic for joining the meeting
+        max_retries = 5
+        for attempt in range(max_retries):
+            try:
+                await page.goto(meet_link)
+                print(f"Opened meet link: {meet_link}")
+                await capture_and_upload_screenshot(page, "meet_opened")
 
-        # Grant necessary permissions
-        await page.evaluate('''() => {
-            navigator.permissions.query = (parameters) => {
-                return Promise.resolve({ state: 'granted' });
-            };
-        }''')
+                # Join Google Meet
+                got_it_button = await page.wait_for_selector("button.UywwFc-LgbsSe.UywwFc-LgbsSe-OWXEXe-dgl2Hf.IMT1Gf", timeout=10000)
+                await got_it_button.click()
+                await capture_and_upload_screenshot(page, "after_got_it_clicked")
 
-        for i in range(5):
-            await capture_and_upload_screenshot(page, f"screenshot_{i+1}")
-            await asyncio.sleep(1)
-        try:
-            await page.wait_for_selector("button:has-text('Join now')", timeout=120000)
-            button = await page.query_selector("button:has-text('Join now')")
-            await button.click()
-        except Exception:
-            print("No popup")
-        await capture_and_upload_screenshot(page, "after_popup_handling")
+                # Locate the name input field
+                name_input_selector = 'div.qdOxv-fmcmS-yrriRe.qdOxv-fmcmS-yrriRe-OWXEXe-INsAgc.qdOxv-fmcmS-yrriRe-OWXEXe-di8rgd-V67aGc input[type="text"]'
+                name_input = await page.wait_for_selector(name_input_selector, timeout=10000)
+                await name_input.fill("Catchflow AI")
+                await capture_and_upload_screenshot(page, "entered_name")
 
-        print("Disable microphone")
-        try:
-            button = await page.wait_for_selector("//div[@aria-label='Turn off microphone']", timeout=10000)
-            print("Disabling microphone using Playwright")
-            await button.click()
-        except Exception:
-            print("Microphone button not found using Playwright")
-        await capture_and_upload_screenshot(page, "after_microphone_disable")
+                try:
+                    button = await page.wait_for_selector("//div[@aria-label='Turn off microphone']", timeout=10000)
+                    print("Disabling microphone using Playwright")
+                    await button.click()
+                except Exception:
+                    print("Microphone button not found using Playwright")
+                    raise HTTPException(status_code=500, detail="Microphone button not found")
+                await capture_and_upload_screenshot(page, "after_microphone_disable")
+                await page.wait_for_timeout(random.randint(1000, 3000))
 
-        print("Disable camera")
-        try:
-            button = await page.wait_for_selector("//div[@aria-label='Turn off camera']", timeout=10000)
-            print("Disabling camera using Playwright")
-            await button.click()
-        except Exception:
-            print("Camera button not found using Playwright")
-        await capture_and_upload_screenshot(page, "after_camera_disable")
+                print("Disable camera")
+                try:
+                    button = await page.wait_for_selector("//div[@aria-label='Turn off camera']", timeout=10000)
+                    print("Disabling camera using Playwright")
+                    await button.click()
+                except Exception:
+                    print("Camera button not found using Playwright")
+                    raise HTTPException(status_code=500, detail="Camera button not found")
+                await capture_and_upload_screenshot(page, "after_camera_disable")
+                await page.wait_for_timeout(random.randint(1000, 3000))
 
-        # Handle authentication and meeting options
-        try:
-            input_element = await page.wait_for_selector('.//input[@aria-label="Your name"]', timeout=10000)
-            await input_element.fill("Catchflow AI")
-        except Exception:
-            print("Name input field not found")
-        await capture_and_upload_screenshot(page, "after_name_input")
+                try:
+                    join_now_button = await page.wait_for_selector("//span[contains(text(), 'Join now')]/ancestor::button", timeout=10000)
+                    print(join_now_button)
+                    await join_now_button.click()
+                except Exception:
+                    print("Join Now button not found")
+                await capture_and_upload_screenshot(page, "after_join_now_click")
+                break
 
-        try:
-            join_now_button = await page.wait_for_selector("//span[contains(text(), 'Join now')]/ancestor::button", timeout=10000)
-            print(join_now_button)
-            await join_now_button.click()
-        except Exception:
-            print("Join Now button not found")
-        await capture_and_upload_screenshot(page, "after_join_now_click")
+            except Exception as e:
+                print(f"Attempt {attempt + 1} failed: {e}")
+                if attempt < max_retries - 1:
+                    print("Retrying...")
+                    await asyncio.sleep(5)  # Wait before retrying
+                else:
+                    raise HTTPException(status_code=500, detail="Failed to join meeting after multiple attempts.")
 
         # Start capturing the transcript
         print("Start capturing transcript")
