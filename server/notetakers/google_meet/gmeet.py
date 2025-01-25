@@ -23,9 +23,9 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 def setup_virtual_audio_devices():
     try:
         print("Setting up virtual audio devices...")
-        subprocess.check_output('pactl load-module module-null-sink sink_name=DummyOutput', shell=True)
-        subprocess.check_output('pactl load-module module-null-sink sink_name=MicOutput', shell=True)
-        subprocess.check_output('pactl set-default-source MicOutput.monitor', shell=True)
+        subprocess.check_output('pactl load-module module-null-sink sink_name=CustomOutput', shell=True)
+        subprocess.check_output('pactl load-module module-null-sink sink_name=CustomMicOutput', shell=True)
+        subprocess.check_output('pactl set-default-source CustomMicOutput.monitor', shell=True)
     except subprocess.CalledProcessError as e:
         print(f"Error setting up virtual audio: {e}")
         raise HTTPException(status_code=500, detail="Failed to set up virtual audio devices.")
@@ -68,42 +68,39 @@ async def join_meet(meet_link, end_time=30):
     display.start()
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False, args=[
-            "--disable-blink-features=AutomationControlled",
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--disable-dev-shm-usage",
-            "--disable-extensions",
-            "--enable-webgl",
-            "--use-gl=egl",
-            "--disable-features=IsolateOrigins,site-per-process",
-            "--disable-blink-features",
-            "--use-fake-ui-for-media-stream",
-            "--use-fake-device-for-media-stream",
-            "--disable-features=WebRTC-HW-Decoding,WebRTC-HW-Encoding,WebRTC-Smoothness",
-            "--disable-features=WebRTC-ICE-Connection-Checking",
-        ])
+        browser = await p.chromium.launch(
+            headless=False,
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--use-fake-ui-for-media-stream",
+                "--use-fake-device-for-media-stream",
+                "--window-size=1920x1080",
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-gpu",
+                "--disable-extensions",
+                "--disable-application-cache",
+                "--disable-dev-shm-usage"
+            ]
+        )
+
         context = await browser.new_context(
             user_agent=random.choice([
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36",
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " \
+                "(KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
             ]),
-            viewport={"width": 1280, "height": 720},
             locale="en-US",
-            timezone_id="America/Los_Angeles",
-            geolocation={"latitude": 37.7749, "longitude": -122.4194},
-            permissions=["geolocation", "notifications"],
-            color_scheme="dark"
+            timezone_id="America/Los_Angeles"
         )
+
         page = await context.new_page()
 
-        # Add stealth and spoofing
+        # Add stealth-like script
         await page.add_init_script("""
             Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
             Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3] });
             Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
             window.chrome = { runtime: {} };
-            // Additional stealth measures
             Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 4 });
             Object.defineProperty(navigator, 'deviceMemory', { get: () => 8 });
         """)
@@ -141,7 +138,7 @@ async def join_meet(meet_link, end_time=30):
                     await button.click()
                 except Exception:
                     print("Microphone button not found using Playwright")
-                    raise HTTPException(status_code=500, detail="Microphone button not found")
+                    continue
                 await capture_and_upload_screenshot(page, "after_microphone_disable")
                 await page.wait_for_timeout(random.randint(1000, 3000))
 
@@ -152,7 +149,7 @@ async def join_meet(meet_link, end_time=30):
                     await button.click()
                 except Exception:
                     print("Camera button not found using Playwright")
-                    raise HTTPException(status_code=500, detail="Camera button not found")
+                    continue
                 await capture_and_upload_screenshot(page, "after_camera_disable")
                 await page.wait_for_timeout(random.randint(1000, 3000))
 
@@ -182,7 +179,7 @@ async def join_meet(meet_link, end_time=30):
 
         while True and (time.time() - start_time) < (end_time * 60):
             try:
-                caption_button = await page.wait_for_selector('//*[@id="yDmH0d"]/c-wiz/div/div/div[34]/div[4]/div[10]/div/div/div[2]/div/div[3]/span/button', timeout=10000)
+                caption_button = await page.wait_for_selector('button[aria-label="Turn on captions"]', timeout=10000)
                 # Check if the button is not enabled by checking the aria-pressed attribute
                 print(caption_button)
                 aria_pressed = await page.evaluate('(button) => button.getAttribute("aria-pressed")', caption_button)
